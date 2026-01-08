@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Image Upscaler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        select {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            background: #6c757d;
+        }
+
+        .button-success {
+            background: #28a745;
+        }
+
+        .stats {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+            display: none;
+        }
+
+        .stats.active {
+            display: block;
+        }
+
+        .progress-container {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .image-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .image-card.processing {
+            opacity: 0.6;
+        }
+
+        .image-card.completed {
+            border-color: #28a745;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #e0e0e0;
+        }
+
+        .image-info {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .image-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .image-status {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-processing {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .status-completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            select, button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Batch Image Upscaler</h1>
+        <p class="subtitle">Upload and upscale multiple images at once</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p><strong>Click to upload</strong> or drag and drop</p>
+            <p style="font-size: 12px; color: #999; margin-top: 5px;">Select multiple images (PNG, JPG, WEBP)</p>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+
+        <div class="controls">
+            <label for="scaleSelect">Upscale Factor:</label>
+            <select id="scaleSelect">
+                <option value="2">2x (Double)</option>
+                <option value="3">3x (Triple)</option>
+                <option value="4">4x (Quadruple)</option>
+                <option value="8">8x (Extreme)</option>
+            </select>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+        </div>
+
+        <div id="imagesContainer">
+            <div class="empty-state" id="emptyState">
+                No images uploaded yet. Upload some images to get started!
+            </div>
+            <div class="images-grid" id="imagesGrid"></div>
+        </div>
+
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+            <button id="upscaleAllBtn">Upscale All Images</button>
+            <button id="downloadAllBtn" class="button-success" style="display: none;">Download All</button>
+            <button id="clearAllBtn" class="button-secondary">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const scaleSelect = document.getElementById('scaleSelect');
+        const imagesGrid = document.getElementById('imagesGrid');
+        const emptyState = document.getElementById('emptyState');
+        const stats = document.getElementById('stats');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const actionButtons = document.getElementById('actionButtons');
+        const upscaleAllBtn = document.getElementById('upscaleAllBtn');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+        let images = [];
+        let processingQueue = [];
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+            fileInput.value = '';
+        });
+
+        // Handle multiple files
+        function handleFiles(files) {
+            files.forEach(file => {
+                const id = Date.now() + Math.random();
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        images.push({
+                            id: id,
+                            name: file.name,
+                            file: file,
+                            original: img,
+                            upscaled: null,
+                            status: 'pending'
+                        });
+                        renderImages();
+                        updateStats();
+                    };
+                    img.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Render images grid
+        function renderImages() {
+            if (images.length === 0) {
+                emptyState.style.display = 'block';
+                imagesGrid.style.display = 'none';
+                actionButtons.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            imagesGrid.style.display = 'grid';
+            actionButtons.style.display = 'flex';
+
+            imagesGrid.innerHTML = images.map(img => `
+                <div class="image-card ${img.status === 'processing' ? 'processing' : ''} ${img.status === 'completed' ? 'completed' : ''}" data-id="${img.id}">
+                    <button class="remove-btn" onclick="removeImage(${img.id})">×</button>
+                    <img src="${img.original.src}" class="image-preview" alt="${img.name}">
+                    <div class="image-name" title="${img.name}">${img.name}</div>
+                    <div class="image-info">
+                        ${img.original.width} × ${img.original.height}px
+                        ${img.upscaled ? `→ ${img.upscaled.width} × ${img.upscaled.height}px` : ''}
+                    </div>
+                    <span class="image-status status-${img.status}">
+                        ${img.status === 'pending' ? '⏳ Pending' : ''}
+                        ${img.status === 'processing' ? '⚙️ Processing' : ''}
+                        ${img.status === 'completed' ? '✓ Completed' : ''}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Remove image
+        window.removeImage = function(id) {
+            images = images.filter(img => img.id !== id);
+            renderImages();
+            updateStats();
+        };
+
+        // Update stats
+        function updateStats() {
+            const completed = images.filter(img => img.status === 'completed').length;
+            const total = images.length;
+
+            if (total === 0) {
+                stats.classList.remove('active');
+                downloadAllBtn.style.display = 'none';
+                return;
+            }
+
+            stats.classList.add('active');
+            stats.innerHTML = `
+                <strong>Images:</strong> ${total} uploaded | 
+                <strong>Completed:</strong> ${completed}/${total} | 
+                <strong>Scale:</strong> ${scaleSelect.value}x
+            `;
+
+            if (completed === total && total > 0) {
+                downloadAllBtn.style.display = 'block';
+            } else {
+                downloadAllBtn.style.display = 'none';
+            }
+        }
+
+        // Upscale all button
+        upscaleAllBtn.addEventListener('click', async () => {
+            const scale = parseInt(scaleSelect.value);
+            const pending = images.filter(img => img.status === 'pending');
+            
+            if (pending.length === 0) {
+                alert('All images are already upscaled!');
+                return;
+            }
+
+            upscaleAllBtn.disabled = true;
+            progressContainer.classList.add('active');
+
+            for (let i = 0; i < pending.length; i++) {
+                const img = pending[i];
+                img.status = 'processing';
+                renderImages();
+
+                await upscaleImage(img, scale);
+
+                img.status = 'completed';
+                
+                const progress = Math.round(((i + 1) / pending.length) * 100);
+                progressFill.style.width = progress + '%';
+                progressFill.textContent = progress + '%';
+                
+                renderImages();
+                updateStats();
+
+                // Small delay to prevent UI freezing
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            upscaleAllBtn.disabled = false;
+            progressContainer.classList.remove('active');
+            progressFill.style.width = '0%';
+        });
+
+        // Upscale single image
+        async function upscaleImage(imageObj, scale) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                const newWidth = imageObj.original.width * scale;
+                const newHeight = imageObj.original.height * scale;
+
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+
+                ctx.drawImage(imageObj.original, 0, 0, newWidth, newHeight);
+
+                imageObj.upscaled = canvas;
+                resolve();
+            });
+        }
+
+        // Download all button - creates a zip file
+        downloadAllBtn.addEventListener('click', async () => {
+            const completed = images.filter(img => img.status === 'completed');
+            
+            if (completed.length === 0) {
+                alert('No images to download!');
+                return;
+            }
+
+            downloadAllBtn.disabled = true;
+            downloadAllBtn.textContent = 'Creating ZIP...';
+
+            try {
+                const zip = new JSZip();
+                
+                // Add each image to the zip
+                for (const img of completed) {
+                    const dataURL = img.upscaled.toDataURL('image/png');
+                    const base64Data = dataURL.split(',')[1];
+                    const baseName = img.name.replace(/\.[^/.]+$/, '');
+                    zip.file(`${baseName}_upscaled_${scaleSelect.value}x.png`, base64Data, {base64: true});
+                }
+
+                // Generate zip file
+                const content = await zip.generateAsync({type: 'blob'});
+                
+                // Download the zip
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `upscaled_images_${scaleSelect.value}x.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                downloadAllBtn.textContent = 'Download All';
+            } catch (error) {
+                console.error('Error creating zip:', error);
+                alert('Error creating zip file. Please try again.');
+            }
+            
+            downloadAllBtn.disabled = false;
+        });
+
+        // Clear all button
+        clearAllBtn.addEventListener('click', () => {
+            if (images.length === 0) return;
+            
+            if (confirm(`Clear all ${images.length} images?`)) {
+                images = [];
+                renderImages();
+                updateStats();
+                progressContainer.classList.remove('active');
+            }
+        });
+
+        // Update stats when scale changes
+        scaleSelect.addEventListener('change', () => {
+            // Reset all to pending if scale changes
+            images.forEach(img => {
+                img.status = 'pending';
+                img.upscaled = null;
+            });
+            renderImages();
+            updateStats();
+        });
+    </script>
+</body>
+</html>
