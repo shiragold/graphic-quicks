@@ -10,8 +10,9 @@ Open `photo-collage.html` directly in a browser.
 - **Automatic ordering by photo timestamp** (EXIF `DateTimeOriginal`), with fallback to the file's `lastModified`.
 - Drag-and-drop reorder of photos in the thumbnail strip.
 - Configurable output resolution (default `800 x 1200`), with one-click ratio presets (2:3, 3:2, 1:1, 9:16, 16:9, A4).
-- Five layout modes:
-  - **Justified (no crop)** -- default; described in detail below.
+- Six layout modes:
+  - **Justified rows (no crop)** -- default; rows fill the canvas width, free heights.
+  - **Justified columns (no crop)** -- columns fill the canvas height, free widths. Mathematical transpose of rows mode.
   - **Grid (auto)** -- equal-cell grid, photos object-fit-cover (crops to fit).
   - **Columns (masonry)** -- shortest-column placement, vertically scaled to fit.
   - **Single row** / **Single column** -- equal-cell strip layouts.
@@ -31,6 +32,8 @@ Each upload batch is sorted oldest-first by the resolved date and appended to th
 This is the interesting part. The goal is:
 
 > Show every uploaded photo in full -- **no cropping**, **no edge gaps**, on a fixed-size canvas, regardless of the photos' aspect ratios.
+
+The algorithm comes in two flavors -- rows and columns -- which are mathematical transposes of each other (see below). The "rows" version is described first; the "columns" version is built by reusing the same code on a transposed problem.
 
 For arbitrary mixed-aspect photos and an arbitrary canvas aspect ratio, this is mathematically over-constrained -- you cannot in general have all of:
 
@@ -100,6 +103,23 @@ Apply `bestScale` uniformly to row heights, photo widths, and gaps. Center the r
 - Mixing portrait and landscape photos in one row is fine: the row's height is whatever makes the row's total width equal `W`, so a portrait photo in a row will end up the same height as the landscapes next to it (its width will be small, theirs will be large).
 
 The honest trade-off: there will sometimes be a strip of background color on one axis. The amount of leftover is minimized by the coverage scoring.
+
+### Columns mode = transposed rows mode
+
+For column-based justified layout, photos are packed into **columns** that exactly fill the canvas **height**, columns stack horizontally, and each column has its own width determined by its photos.
+
+This is the same problem as rows mode after a 90-degree rotation. We don't reimplement it; we transform the inputs:
+
+- Swap the canvas dimensions: `W <-> H`.
+- Replace each photo's aspect ratio `a = w/h` with its reciprocal `1/a` (because in the transposed space, "width" becomes "height" and vice versa).
+
+Run the row algorithm on the transformed problem. Each "row" in the transposed space is a real **column** in the canvas; each photo's transposed `width` is its real **height** and vice versa. We track this with a `transpose` flag and remap the output rectangles accordingly:
+
+```
+local (u, v, w_local, h_local)  ->  real (innerX + v, innerY + u, h_local, w_local)
+```
+
+So all the partition + coverage scoring + uniform scale logic is shared between the two directions.
 
 ### Complexity
 
