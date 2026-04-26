@@ -285,7 +285,8 @@
                 <div class="control">
                     <label>Layout</label>
                     <select id="layout">
-                        <option value="justified" selected>Justified (no crop)</option>
+                        <option value="justified-rows" selected>Justified rows (no crop)</option>
+                        <option value="justified-cols">Justified columns (no crop)</option>
                         <option value="grid">Grid (auto)</option>
                         <option value="columns">Columns (masonry)</option>
                         <option value="row">Single row</option>
@@ -573,7 +574,20 @@
             c.restore();
         }
 
-        // Justified / row-based layout. Every photo is shown in full (no crop).
+        // Justified layout. Every photo is shown in full (no crop).
+        //
+        // Two directions:
+        //   transpose=false (rows):    photos packed into rows that fill the
+        //                              canvas WIDTH; rows stack vertically and
+        //                              each row has its own height.
+        //   transpose=true  (columns): photos packed into columns that fill the
+        //                              canvas HEIGHT; columns stack horizontally
+        //                              and each column has its own width.
+        //
+        // The two modes are mathematical transposes of each other. We implement
+        // the row mode and reuse it for columns by transposing the canvas
+        // dimensions and aspect ratios on input, then transposing the output
+        // rectangles before returning.
         //
         // For arbitrary mixed aspect ratios + a fixed canvas it's mathematically
         // impossible to always fill the canvas exactly with no cropping. So we:
@@ -586,8 +600,15 @@
         //      fraction of the canvas (smallest leftover gap area).
         //   4. Center the stack on the canvas; the background color fills any
         //      leftover strip on the side or bottom.
-        function computeJustified(s, innerX, innerY, innerW, innerH) {
-            const aspects = photos.map(p => p.img.naturalWidth / p.img.naturalHeight);
+        function computeJustified(s, innerX, innerY, innerW, innerH, transpose) {
+            // For column mode, transpose the problem: swap canvas dimensions
+            // and use 1/aspect (since each photo's role of width <-> height swaps).
+            const W = transpose ? innerH : innerW;
+            const H = transpose ? innerW : innerH;
+            const aspects = photos.map(p => {
+                const a = p.img.naturalWidth / p.img.naturalHeight;
+                return transpose ? 1 / a : a;
+            });
             const n = aspects.length;
             if (n === 0) return [];
 
@@ -632,7 +653,7 @@
             }
 
             // For a given list of row-end indices, compute the layout assuming
-            // each row exactly fills innerW. Returns { rows, totalW, totalH }.
+            // each row exactly fills W (transposed-aware).
             function buildRows(breaks) {
                 const rows = [];
                 let start = 0;
@@ -642,7 +663,7 @@
                     let sumA = 0;
                     for (let k = start; k < end; k++) sumA += aspects[k];
                     const numInRow = end - start;
-                    const availW = innerW - (numInRow - 1) * s.gap;
+                    const availW = W - (numInRow - 1) * s.gap;
                     const rowH = availW / sumA;
                     rows.push({ start, end, height: rowH });
                     totalH += rowH;
@@ -660,13 +681,9 @@
             for (let k = 1; k <= n; k++) {
                 const breaks = partition(k);
                 const { rows, totalH } = buildRows(breaks);
-                // Each row already has width = innerW. So baseW = innerW.
-                // To fit inside innerW x innerH preserving aspects, uniform
-                // scale = min(innerW/baseW, innerH/totalH) = min(1, innerH/totalH).
-                const scale = Math.min(1, innerH / totalH);
-                const finalW = innerW * scale;
-                const finalH = totalH * scale;
-                const coverage = (finalW * finalH) / (innerW * innerH);
+                // Each row has length W. To fit inside W x H preserving aspects:
+                const scale = Math.min(1, H / totalH);
+                const coverage = (W * scale * totalH * scale) / (W * H);
                 if (coverage > bestScore) {
                     bestScore = coverage;
                     bestRows = rows;
@@ -674,29 +691,49 @@
                 }
             }
 
-            // Emit rectangles. Apply uniform scale, then center within canvas.
+            // Compute scaled total stack height in transposed space.
             const rows = bestRows;
             let totalH = 0;
             for (let r = 0; r < rows.length; r++) {
                 totalH += rows[r].height;
                 if (r < rows.length - 1) totalH += s.gap;
             }
-            const finalW = innerW * bestScale;
+            const finalW = W * bestScale;
             const finalH = totalH * bestScale;
-            const offsetX = innerX + (innerW - finalW) / 2;
-            const offsetY = innerY + (innerH - finalH) / 2;
+
+            // Build rectangles in transposed (local) coordinates, then map
+            // back to real canvas coordinates.
+            // Local axes: u = along the row (length W), v = stacking axis (height H).
+            const offsetU = (W - finalW) / 2;
+            const offsetV = (H - finalH) / 2;
 
             const out = new Array(n);
-            let y = offsetY;
+            let v = offsetV;
             for (const row of rows) {
                 const rowH = row.height * bestScale;
-                let x = offsetX;
+                let u = offsetU;
                 for (let k = row.start; k < row.end; k++) {
-                    const w = aspects[k] * rowH;
-                    out[k] = { x, y, w, h: rowH };
-                    x += w + s.gap * bestScale;
+                    const wLocal = aspects[k] * rowH;
+                    if (transpose) {
+                        // local (u along H, v along W) -> real (x = innerX + v, y = innerY + u)
+                        // photo width in real space = rowH; height = wLocal
+                        out[k] = {
+                            x: innerX + v,
+                            y: innerY + u,
+                            w: rowH,
+                            h: wLocal,
+                        };
+                    } else {
+                        out[k] = {
+                            x: innerX + u,
+                            y: innerY + v,
+                            w: wLocal,
+                            h: rowH,
+                        };
+                    }
+                    u += wLocal + s.gap * bestScale;
                 }
-                y += rowH + s.gap * bestScale;
+                v += rowH + s.gap * bestScale;
             }
             return out;
         }
@@ -710,8 +747,11 @@
 
             if (n === 0) return rects;
 
-            if (s.layout === 'justified') {
-                return computeJustified(s, innerX, innerY, innerW, innerH);
+            if (s.layout === 'justified-rows') {
+                return computeJustified(s, innerX, innerY, innerW, innerH, false);
+            }
+            if (s.layout === 'justified-cols') {
+                return computeJustified(s, innerX, innerY, innerW, innerH, true);
             }
 
             if (s.layout === 'row') {
