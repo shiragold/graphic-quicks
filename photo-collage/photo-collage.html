@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Collage Maker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover { background: #f8f9ff; border-color: #764ba2; }
+        .upload-area.dragover { background: #f0f2ff; border-color: #764ba2; }
+        #fileInput { display: none; }
+        .upload-icon { font-size: 48px; margin-bottom: 10px; }
+
+        .controls-section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control input[type="number"],
+        .control select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .control input[type="number"]:focus,
+        .control select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .control input[type="color"] {
+            width: 100%;
+            height: 38px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        .range-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .range-row input[type="range"] { flex: 1; }
+        .range-row .value {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+            min-width: 32px;
+            text-align: right;
+        }
+
+        .ratio-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ratio-row input[type="number"] {
+            flex: 1;
+            min-width: 0;
+        }
+        .ratio-row .x { color: #999; font-weight: 600; }
+
+        .preset-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .preset-btns button {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: white;
+            color: #667eea;
+            border: 1px solid #c7cffa;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .preset-btns button:hover { background: #eef0ff; }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .thumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            min-height: 0;
+        }
+        .thumb {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
+            cursor: grab;
+            background: #eee;
+            flex-shrink: 0;
+        }
+        .thumb.dragging { opacity: 0.4; }
+        .thumb.drag-over { border-color: #667eea; }
+        .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+        .thumb .order {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .thumb .remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .thumb .remove:hover { background: #c82333; }
+
+        .preview-wrap {
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            min-height: 200px;
+            align-items: center;
+        }
+        #previewCanvas {
+            max-width: 100%;
+            max-height: 70vh;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            background: white;
+        }
+
+        .empty-preview {
+            color: #999;
+            font-size: 14px;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .action-buttons button { flex: 1; min-width: 150px; }
+        .button-secondary { background: #6c757d; }
+
+        .info-line {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Photo Collage Maker</h1>
+        <p class="subtitle">Upload photos, arrange them automatically by date taken, and download a collage. The default justified layout shows every photo in full -- no cropping, no edge gaps. No uploads to any server.</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">+</div>
+            <div><strong>Drop photos here</strong> or click to browse</div>
+            <div class="info-line">Any number of images. JPEG, PNG, WebP supported.</div>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+
+        <div id="thumbs" class="thumbs"></div>
+
+        <div class="controls-section">
+            <div class="controls-grid">
+                <div class="control">
+                    <label>Output size (px)</label>
+                    <div class="ratio-row">
+                        <input type="number" id="outWidth" value="800" min="100" max="10000" step="10">
+                        <span class="x">x</span>
+                        <input type="number" id="outHeight" value="1200" min="100" max="10000" step="10">
+                    </div>
+                    <div class="preset-btns">
+                        <button data-w="800" data-h="1200">2:3</button>
+                        <button data-w="1200" data-h="800">3:2</button>
+                        <button data-w="1080" data-h="1080">1:1</button>
+                        <button data-w="1080" data-h="1920">9:16</button>
+                        <button data-w="1920" data-h="1080">16:9</button>
+                        <button data-w="1240" data-h="1748">A4</button>
+                    </div>
+                </div>
+
+                <div class="control">
+                    <label>Layout</label>
+                    <select id="layout">
+                        <option value="justified" selected>Justified (no crop)</option>
+                        <option value="grid">Grid (auto)</option>
+                        <option value="columns">Columns (masonry)</option>
+                        <option value="row">Single row</option>
+                        <option value="column">Single column</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Columns / Rows</label>
+                    <input type="number" id="columns" value="2" min="1" max="10" step="1">
+                </div>
+
+                <div class="control">
+                    <label>Gap</label>
+                    <div class="range-row">
+                        <input type="range" id="gap" min="0" max="60" value="8">
+                        <span class="value" id="gapVal">8</span>
+                    </div>
+                </div>
+
+                <div class="control">
+                    <label>Padding</label>
+                    <div class="range-row">
+                        <input type="range" id="padding" min="0" max="100" value="12">
+                        <span class="value" id="paddingVal">12</span>
+                    </div>
+                </div>
+
+                <div class="control">
+                    <label>Corner radius</label>
+                    <div class="range-row">
+                        <input type="range" id="radius" min="0" max="60" value="0">
+                        <span class="value" id="radiusVal">0</span>
+                    </div>
+                </div>
+
+                <div class="control">
+                    <label>Background</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-wrap">
+            <canvas id="previewCanvas"></canvas>
+            <div class="empty-preview" id="emptyPreview">Upload some photos to see your collage</div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="downloadBtn" disabled>Download Collage (PNG)</button>
+            <button id="clearBtn" class="button-secondary" disabled>Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        const photos = [];
+
+        const $ = id => document.getElementById(id);
+        const uploadArea = $('uploadArea');
+        const fileInput = $('fileInput');
+        const thumbsEl = $('thumbs');
+        const canvas = $('previewCanvas');
+        const ctx = canvas.getContext('2d');
+        const emptyPreview = $('emptyPreview');
+        const downloadBtn = $('downloadBtn');
+        const clearBtn = $('clearBtn');
+
+        const controls = {
+            outWidth: $('outWidth'),
+            outHeight: $('outHeight'),
+            layout: $('layout'),
+            columns: $('columns'),
+            gap: $('gap'),
+            padding: $('padding'),
+            radius: $('radius'),
+            bgColor: $('bgColor'),
+        };
+
+        // ---------- EXIF date extraction (JPEG only) ----------
+        // Returns a Date or null. Reads DateTimeOriginal (0x9003) from EXIF SubIFD.
+        async function readExifDate(file) {
+            if (!/jpeg|jpg/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) return null;
+            try {
+                const buf = await file.slice(0, 256 * 1024).arrayBuffer();
+                const view = new DataView(buf);
+                if (view.getUint16(0) !== 0xFFD8) return null;
+                let offset = 2;
+                const len = view.byteLength;
+                while (offset < len) {
+                    if (view.getUint8(offset) !== 0xFF) return null;
+                    const marker = view.getUint8(offset + 1);
+                    const size = view.getUint16(offset + 2);
+                    if (marker === 0xE1) {
+                        // APP1 -- check Exif header
+                        if (view.getUint32(offset + 4) !== 0x45786966) return null; // "Exif"
+                        const tiffStart = offset + 10;
+                        const little = view.getUint16(tiffStart) === 0x4949;
+                        const get16 = o => little ? view.getUint16(o, true) : view.getUint16(o, false);
+                        const get32 = o => little ? view.getUint32(o, true) : view.getUint32(o, false);
+                        if (get16(tiffStart + 2) !== 0x002A) return null;
+                        const ifd0 = tiffStart + get32(tiffStart + 4);
+                        const numEntries = get16(ifd0);
+                        let exifIfdOffset = null;
+                        for (let i = 0; i < numEntries; i++) {
+                            const e = ifd0 + 2 + i * 12;
+                            const tag = get16(e);
+                            if (tag === 0x8769) { // ExifOffset
+                                exifIfdOffset = tiffStart + get32(e + 8);
+                                break;
+                            }
+                        }
+                        if (!exifIfdOffset) return null;
+                        const subEntries = get16(exifIfdOffset);
+                        for (let i = 0; i < subEntries; i++) {
+                            const e = exifIfdOffset + 2 + i * 12;
+                            const tag = get16(e);
+                            // 0x9003 DateTimeOriginal, 0x9004 DateTimeDigitized, 0x0132 DateTime
+                            if (tag === 0x9003 || tag === 0x9004) {
+                                const count = get32(e + 4);
+                                const valOffset = tiffStart + get32(e + 8);
+                                let str = '';
+                                for (let j = 0; j < count - 1; j++) {
+                                    str += String.fromCharCode(view.getUint8(valOffset + j));
+                                }
+                                // Format: "YYYY:MM:DD HH:MM:SS"
+                                const m = str.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+                                if (m) {
+                                    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+                                }
+                            }
+                        }
+                        return null;
+                    } else {
+                        offset += 2 + size;
+                    }
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => resolve({ img, url });
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')); };
+                img.src = url;
+            });
+        }
+
+        async function addFiles(fileList) {
+            const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+            if (!files.length) return;
+
+            const newPhotos = await Promise.all(files.map(async (file) => {
+                const exifDate = await readExifDate(file);
+                const date = exifDate || new Date(file.lastModified);
+                const { img, url } = await loadImage(file);
+                return { file, img, url, date, name: file.name };
+            }));
+
+            // Sort the newly-added batch by date taken (oldest first), then append.
+            newPhotos.sort((a, b) => a.date - b.date);
+            photos.push(...newPhotos);
+
+            renderThumbs();
+            render();
+            updateButtons();
+        }
+
+        function renderThumbs() {
+            thumbsEl.innerHTML = '';
+            photos.forEach((p, i) => {
+                const el = document.createElement('div');
+                el.className = 'thumb';
+                el.draggable = true;
+                el.dataset.index = i;
+                el.innerHTML = `
+                    <img src="${p.url}" alt="">
+                    <span class="order">${i + 1}</span>
+                    <button class="remove" title="Remove">x</button>
+                `;
+                el.querySelector('.remove').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    URL.revokeObjectURL(p.url);
+                    photos.splice(i, 1);
+                    renderThumbs();
+                    render();
+                    updateButtons();
+                });
+
+                el.addEventListener('dragstart', (e) => {
+                    el.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', String(i));
+                });
+                el.addEventListener('dragend', () => el.classList.remove('dragging'));
+                el.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    el.classList.add('drag-over');
+                });
+                el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+                el.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    el.classList.remove('drag-over');
+                    const from = +e.dataTransfer.getData('text/plain');
+                    const to = +el.dataset.index;
+                    if (isNaN(from) || from === to) return;
+                    const [moved] = photos.splice(from, 1);
+                    photos.splice(to, 0, moved);
+                    renderThumbs();
+                    render();
+                });
+
+                thumbsEl.appendChild(el);
+            });
+        }
+
+        function updateButtons() {
+            const has = photos.length > 0;
+            downloadBtn.disabled = !has;
+            clearBtn.disabled = !has;
+            emptyPreview.style.display = has ? 'none' : 'block';
+            canvas.style.display = has ? 'block' : 'none';
+        }
+
+        // ---------- Layout / drawing ----------
+        function getSettings() {
+            return {
+                W: Math.max(100, +controls.outWidth.value || 800),
+                H: Math.max(100, +controls.outHeight.value || 1200),
+                layout: controls.layout.value,
+                columns: Math.max(1, +controls.columns.value || 1),
+                gap: +controls.gap.value,
+                padding: +controls.padding.value,
+                radius: +controls.radius.value,
+                bg: controls.bgColor.value,
+            };
+        }
+
+        function roundedRectPath(c, x, y, w, h, r) {
+            r = Math.min(r, w / 2, h / 2);
+            c.beginPath();
+            c.moveTo(x + r, y);
+            c.lineTo(x + w - r, y);
+            c.quadraticCurveTo(x + w, y, x + w, y + r);
+            c.lineTo(x + w, y + h - r);
+            c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            c.lineTo(x + r, y + h);
+            c.quadraticCurveTo(x, y + h, x, y + h - r);
+            c.lineTo(x, y + r);
+            c.quadraticCurveTo(x, y, x + r, y);
+            c.closePath();
+        }
+
+        // Draw image to fill rect (object-fit: cover)
+        function drawCover(c, img, x, y, w, h, r) {
+            if (w <= 0 || h <= 0) return;
+            c.save();
+            if (r > 0) {
+                roundedRectPath(c, x, y, w, h, r);
+                c.clip();
+            } else {
+                c.beginPath();
+                c.rect(x, y, w, h);
+                c.clip();
+            }
+            const ir = img.naturalWidth / img.naturalHeight;
+            const tr = w / h;
+            let sx, sy, sw, sh;
+            if (ir > tr) {
+                sh = img.naturalHeight;
+                sw = sh * tr;
+                sx = (img.naturalWidth - sw) / 2;
+                sy = 0;
+            } else {
+                sw = img.naturalWidth;
+                sh = sw / tr;
+                sx = 0;
+                sy = (img.naturalHeight - sh) / 2;
+            }
+            c.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+            c.restore();
+        }
+
+        // Justified / row-based layout. Every photo is shown in full (no crop).
+        //
+        // For arbitrary mixed aspect ratios + a fixed canvas it's mathematically
+        // impossible to always fill the canvas exactly with no cropping. So we:
+        //   1. Try every possible number of rows (1..N) and find the optimal
+        //      consecutive-partition for each via linear-partition DP that
+        //      balances row aspect sums (so rows have similar heights).
+        //   2. For each candidate, scale the stack uniformly to fit inside
+        //      innerW x innerH while preserving aspect ratios (no crop).
+        //   3. Pick the row count whose scaled stack covers the largest
+        //      fraction of the canvas (smallest leftover gap area).
+        //   4. Center the stack on the canvas; the background color fills any
+        //      leftover strip on the side or bottom.
+        function computeJustified(s, innerX, innerY, innerW, innerH) {
+            const aspects = photos.map(p => p.img.naturalWidth / p.img.naturalHeight);
+            const n = aspects.length;
+            if (n === 0) return [];
+
+            // Build optimal row partitions via linear partition DP.
+            // We minimize the maximum row aspect-sum (classic linear partition)
+            // which yields rows with similar heights when each fills the width.
+            function partition(k) {
+                if (k >= n) k = n;
+                if (k <= 1) return [n];
+                // dp[i][j] = best (min of max row aspect sum) for first i photos
+                // split into j rows. parent[i][j] = best previous boundary.
+                const prefix = new Array(n + 1).fill(0);
+                for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + aspects[i];
+                const dp = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(Infinity));
+                const parent = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(0));
+                dp[0][0] = 0;
+                for (let i = 1; i <= n; i++) {
+                    dp[i][1] = prefix[i];
+                    parent[i][1] = 0;
+                }
+                for (let j = 2; j <= k; j++) {
+                    for (let i = j; i <= n; i++) {
+                        for (let p = j - 1; p < i; p++) {
+                            const cost = Math.max(dp[p][j - 1], prefix[i] - prefix[p]);
+                            if (cost < dp[i][j]) {
+                                dp[i][j] = cost;
+                                parent[i][j] = p;
+                            }
+                        }
+                    }
+                }
+                const breaks = [];
+                let i = n, j = k;
+                while (j > 0) {
+                    breaks.push(i);
+                    i = parent[i][j];
+                    j--;
+                }
+                breaks.reverse();
+                // breaks = [end1, end2, ..., n]
+                return breaks;
+            }
+
+            // For a given list of row-end indices, compute the layout assuming
+            // each row exactly fills innerW. Returns { rows, totalW, totalH }.
+            function buildRows(breaks) {
+                const rows = [];
+                let start = 0;
+                let totalH = 0;
+                for (let bi = 0; bi < breaks.length; bi++) {
+                    const end = breaks[bi];
+                    let sumA = 0;
+                    for (let k = start; k < end; k++) sumA += aspects[k];
+                    const numInRow = end - start;
+                    const availW = innerW - (numInRow - 1) * s.gap;
+                    const rowH = availW / sumA;
+                    rows.push({ start, end, height: rowH });
+                    totalH += rowH;
+                    if (bi < breaks.length - 1) totalH += s.gap;
+                    start = end;
+                }
+                return { rows, totalH };
+            }
+
+            // Try k = 1..n, pick the best by coverage of canvas after uniform
+            // scale-to-fit.
+            let bestScore = -Infinity;
+            let bestRows = null;
+            let bestScale = 1;
+            for (let k = 1; k <= n; k++) {
+                const breaks = partition(k);
+                const { rows, totalH } = buildRows(breaks);
+                // Each row already has width = innerW. So baseW = innerW.
+                // To fit inside innerW x innerH preserving aspects, uniform
+                // scale = min(innerW/baseW, innerH/totalH) = min(1, innerH/totalH).
+                const scale = Math.min(1, innerH / totalH);
+                const finalW = innerW * scale;
+                const finalH = totalH * scale;
+                const coverage = (finalW * finalH) / (innerW * innerH);
+                if (coverage > bestScore) {
+                    bestScore = coverage;
+                    bestRows = rows;
+                    bestScale = scale;
+                }
+            }
+
+            // Emit rectangles. Apply uniform scale, then center within canvas.
+            const rows = bestRows;
+            let totalH = 0;
+            for (let r = 0; r < rows.length; r++) {
+                totalH += rows[r].height;
+                if (r < rows.length - 1) totalH += s.gap;
+            }
+            const finalW = innerW * bestScale;
+            const finalH = totalH * bestScale;
+            const offsetX = innerX + (innerW - finalW) / 2;
+            const offsetY = innerY + (innerH - finalH) / 2;
+
+            const out = new Array(n);
+            let y = offsetY;
+            for (const row of rows) {
+                const rowH = row.height * bestScale;
+                let x = offsetX;
+                for (let k = row.start; k < row.end; k++) {
+                    const w = aspects[k] * rowH;
+                    out[k] = { x, y, w, h: rowH };
+                    x += w + s.gap * bestScale;
+                }
+                y += rowH + s.gap * bestScale;
+            }
+            return out;
+        }
+
+        function computeRects(s, n) {
+            const innerX = s.padding;
+            const innerY = s.padding;
+            const innerW = s.W - 2 * s.padding;
+            const innerH = s.H - 2 * s.padding;
+            const rects = [];
+
+            if (n === 0) return rects;
+
+            if (s.layout === 'justified') {
+                return computeJustified(s, innerX, innerY, innerW, innerH);
+            }
+
+            if (s.layout === 'row') {
+                const cellW = (innerW - s.gap * (n - 1)) / n;
+                for (let i = 0; i < n; i++) {
+                    rects.push({ x: innerX + i * (cellW + s.gap), y: innerY, w: cellW, h: innerH });
+                }
+                return rects;
+            }
+
+            if (s.layout === 'column') {
+                const cellH = (innerH - s.gap * (n - 1)) / n;
+                for (let i = 0; i < n; i++) {
+                    rects.push({ x: innerX, y: innerY + i * (cellH + s.gap), w: innerW, h: cellH });
+                }
+                return rects;
+            }
+
+            if (s.layout === 'grid') {
+                const cols = Math.min(s.columns, n);
+                const rows = Math.ceil(n / cols);
+                const cellW = (innerW - s.gap * (cols - 1)) / cols;
+                const cellH = (innerH - s.gap * (rows - 1)) / rows;
+                for (let i = 0; i < n; i++) {
+                    const r = Math.floor(i / cols);
+                    const c = i % cols;
+                    rects.push({
+                        x: innerX + c * (cellW + s.gap),
+                        y: innerY + r * (cellH + s.gap),
+                        w: cellW,
+                        h: cellH,
+                    });
+                }
+                return rects;
+            }
+
+            if (s.layout === 'columns') {
+                // Masonry: place each photo into the currently-shortest column,
+                // then scale all columns vertically to fit innerH.
+                const cols = Math.min(s.columns, n);
+                const cellW = (innerW - s.gap * (cols - 1)) / cols;
+                const colItems = Array.from({ length: cols }, () => []);
+                const colHeights = new Array(cols).fill(0);
+
+                photos.forEach((p, i) => {
+                    const ar = p.img.naturalWidth / p.img.naturalHeight;
+                    const h = cellW / ar;
+                    let target = 0;
+                    for (let c = 1; c < cols; c++) {
+                        if (colHeights[c] < colHeights[target]) target = c;
+                    }
+                    colItems[target].push({ index: i, h });
+                    colHeights[target] += h + s.gap;
+                });
+
+                // Trim trailing gap from each col height
+                for (let c = 0; c < cols; c++) {
+                    if (colItems[c].length > 0) colHeights[c] -= s.gap;
+                }
+                const tallest = Math.max(...colHeights, 1);
+                const scale = innerH / tallest;
+
+                // We want a stable order in `rects` matching photo index
+                const out = new Array(n);
+                for (let c = 0; c < cols; c++) {
+                    let y = innerY;
+                    for (const item of colItems[c]) {
+                        const h = item.h * scale;
+                        out[item.index] = {
+                            x: innerX + c * (cellW + s.gap),
+                            y,
+                            w: cellW,
+                            h,
+                        };
+                        y += h + s.gap;
+                    }
+                }
+                return out;
+            }
+
+            return rects;
+        }
+
+        function render() {
+            const s = getSettings();
+            canvas.width = s.W;
+            canvas.height = s.H;
+
+            ctx.fillStyle = s.bg;
+            ctx.fillRect(0, 0, s.W, s.H);
+
+            if (photos.length === 0) return;
+
+            const rects = computeRects(s, photos.length);
+            for (let i = 0; i < photos.length; i++) {
+                const r = rects[i];
+                if (!r) continue;
+                drawCover(ctx, photos[i].img, r.x, r.y, r.w, r.h, s.radius);
+            }
+        }
+
+        // ---------- Wire up ----------
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            addFiles(e.target.files);
+            fileInput.value = '';
+        });
+
+        ['dragenter', 'dragover'].forEach(ev => {
+            uploadArea.addEventListener(ev, (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(ev => {
+            uploadArea.addEventListener(ev, (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+        });
+
+        // Range value displays
+        ['gap', 'padding', 'radius'].forEach(k => {
+            controls[k].addEventListener('input', () => {
+                $(k + 'Val').textContent = controls[k].value;
+                render();
+            });
+        });
+        ['outWidth', 'outHeight', 'layout', 'columns', 'bgColor'].forEach(k => {
+            controls[k].addEventListener('input', render);
+            controls[k].addEventListener('change', render);
+        });
+
+        // Ratio preset buttons
+        document.querySelectorAll('.preset-btns button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                controls.outWidth.value = btn.dataset.w;
+                controls.outHeight.value = btn.dataset.h;
+                render();
+            });
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `collage-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }, 'image/png');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            photos.forEach(p => URL.revokeObjectURL(p.url));
+            photos.length = 0;
+            renderThumbs();
+            render();
+            updateButtons();
+        });
+
+        // Initial state
+        updateButtons();
+        render();
+    </script>
+</body>
+</html>
