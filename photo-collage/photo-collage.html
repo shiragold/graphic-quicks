@@ -4,286 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Collage Maker</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
-        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
-
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-        }
-        .upload-area:hover { background: #f8f9ff; border-color: #764ba2; }
-        .upload-area.dragover { background: #f0f2ff; border-color: #764ba2; }
-        #fileInput { display: none; }
-        .upload-icon { font-size: 48px; margin-bottom: 10px; }
-
-        .controls-section {
-            background: #f8f9ff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .control {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .control label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .control input[type="number"],
-        .control select {
-            padding: 8px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            transition: border-color 0.2s;
-        }
-        .control input[type="number"]:focus,
-        .control select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .control input[type="color"] {
-            width: 100%;
-            height: 38px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            padding: 2px;
-        }
-
-        .range-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .range-row input[type="range"] { flex: 1; }
-        .range-row .value {
-            font-size: 12px;
-            color: #667eea;
-            font-weight: 600;
-            min-width: 32px;
-            text-align: right;
-        }
-
-        .ratio-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .ratio-row input[type="number"] {
-            flex: 1;
-            min-width: 0;
-        }
-        .ratio-row .x { color: #999; font-weight: 600; }
-
-        .preset-btns {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
-        }
-        .preset-btns button {
-            padding: 4px 10px;
-            font-size: 11px;
-            background: white;
-            color: #667eea;
-            border: 1px solid #c7cffa;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .preset-btns button:hover { background: #eef0ff; }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .thumbs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-            min-height: 0;
-        }
-        .thumb {
-            position: relative;
-            width: 90px;
-            height: 90px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #e0e0e0;
-            cursor: grab;
-            background: #eee;
-            flex-shrink: 0;
-        }
-        .thumb.dragging { opacity: 0.4; }
-        .thumb.drag-over { border-color: #667eea; }
-        .thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            pointer-events: none;
-        }
-        .thumb .order {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        .thumb .remove {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            line-height: 1;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .thumb .remove:hover { background: #c82333; }
-
-        .preview-wrap {
-            background: #f0f0f0;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-            min-height: 200px;
-            align-items: center;
-        }
-        #previewCanvas {
-            max-width: 100%;
-            max-height: 70vh;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            border-radius: 4px;
-            background: white;
-        }
-
-        .empty-preview {
-            color: #999;
-            font-size: 14px;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .action-buttons button { flex: 1; min-width: 150px; }
-        .button-secondary { background: #6c757d; }
-
-        .info-line {
-            font-size: 12px;
-            color: #888;
-            margin-top: 8px;
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Photo Collage Maker</h1>
-        <p class="subtitle">Upload photos, arrange them automatically by date taken, and download a collage. The default justified layout shows every photo in full -- no cropping, no edge gaps. No uploads to any server.</p>
+    <main>
+        <header>
+            <h1>Photo Collage Maker</h1>
+            <p>Upload photos, arrange them automatically by date taken, and download a collage. The default justified layout shows every photo in full -- no cropping, no edge gaps. No uploads to any server.</p>
+        </header>
 
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">+</div>
-            <div><strong>Drop photos here</strong> or click to browse</div>
-            <div class="info-line">Any number of images. JPEG, PNG, WebP supported.</div>
-            <input type="file" id="fileInput" accept="image/*" multiple>
-        </div>
+        <section aria-labelledby="upload-heading">
+            <h2 id="upload-heading">Add photos</h2>
+            <label id="uploadArea" for="fileInput">
+                <span aria-hidden="true">+</span>
+                <span><strong>Drop photos here</strong> or click to browse</span>
+                <span>Any number of images. JPEG, PNG, WebP supported.</span>
+            </label>
+            <input type="file" id="fileInput" accept="image/*" multiple hidden>
+            <ul id="thumbs" aria-label="Uploaded photos"></ul>
+        </section>
 
-        <div id="thumbs" class="thumbs"></div>
-
-        <div class="controls-section">
-            <div class="controls-grid">
-                <div class="control">
-                    <label>Output size (px)</label>
-                    <div class="ratio-row">
+        <section aria-labelledby="settings-heading">
+            <h2 id="settings-heading">Collage settings</h2>
+            <form>
+                <fieldset>
+                    <legend>Output size (px)</legend>
+                    <p>
+                        <label for="outWidth">Width</label>
                         <input type="number" id="outWidth" value="800" min="100" max="10000" step="10">
-                        <span class="x">x</span>
+                    </p>
+                    <p>
+                        <label for="outHeight">Height</label>
                         <input type="number" id="outHeight" value="1200" min="100" max="10000" step="10">
+                    </p>
+                    <div class="preset-btns" role="group" aria-label="Aspect ratio presets">
+                        <button type="button" data-w="800" data-h="1200">2:3</button>
+                        <button type="button" data-w="1200" data-h="800">3:2</button>
+                        <button type="button" data-w="1080" data-h="1080">1:1</button>
+                        <button type="button" data-w="1080" data-h="1920">9:16</button>
+                        <button type="button" data-w="1920" data-h="1080">16:9</button>
+                        <button type="button" data-w="1240" data-h="1748">A4</button>
                     </div>
-                    <div class="preset-btns">
-                        <button data-w="800" data-h="1200">2:3</button>
-                        <button data-w="1200" data-h="800">3:2</button>
-                        <button data-w="1080" data-h="1080">1:1</button>
-                        <button data-w="1080" data-h="1920">9:16</button>
-                        <button data-w="1920" data-h="1080">16:9</button>
-                        <button data-w="1240" data-h="1748">A4</button>
-                    </div>
-                </div>
+                </fieldset>
 
-                <div class="control">
-                    <label>Layout</label>
+                <p>
+                    <label for="layout">Layout</label>
                     <select id="layout">
                         <option value="justified-rows" selected>Justified rows (no crop)</option>
                         <option value="justified-cols">Justified columns (no crop)</option>
@@ -292,54 +56,49 @@
                         <option value="row">Single row</option>
                         <option value="column">Single column</option>
                     </select>
-                </div>
+                </p>
 
-                <div class="control">
-                    <label>Columns / Rows</label>
+                <p>
+                    <label for="columns">Columns / Rows</label>
                     <input type="number" id="columns" value="2" min="1" max="10" step="1">
-                </div>
+                </p>
 
-                <div class="control">
-                    <label>Gap</label>
-                    <div class="range-row">
-                        <input type="range" id="gap" min="0" max="60" value="8">
-                        <span class="value" id="gapVal">8</span>
-                    </div>
-                </div>
+                <p>
+                    <label for="gap">Gap</label>
+                    <input type="range" id="gap" min="0" max="60" value="8">
+                    <output id="gapVal" for="gap">8</output>
+                </p>
 
-                <div class="control">
-                    <label>Padding</label>
-                    <div class="range-row">
-                        <input type="range" id="padding" min="0" max="100" value="12">
-                        <span class="value" id="paddingVal">12</span>
-                    </div>
-                </div>
+                <p>
+                    <label for="padding">Padding</label>
+                    <input type="range" id="padding" min="0" max="100" value="12">
+                    <output id="paddingVal" for="padding">12</output>
+                </p>
 
-                <div class="control">
-                    <label>Corner radius</label>
-                    <div class="range-row">
-                        <input type="range" id="radius" min="0" max="60" value="0">
-                        <span class="value" id="radiusVal">0</span>
-                    </div>
-                </div>
+                <p>
+                    <label for="radius">Corner radius</label>
+                    <input type="range" id="radius" min="0" max="60" value="0">
+                    <output id="radiusVal" for="radius">0</output>
+                </p>
 
-                <div class="control">
-                    <label>Background</label>
+                <p>
+                    <label for="bgColor">Background</label>
                     <input type="color" id="bgColor" value="#ffffff">
-                </div>
-            </div>
-        </div>
+                </p>
+            </form>
+        </section>
 
-        <div class="preview-wrap">
-            <canvas id="previewCanvas"></canvas>
-            <div class="empty-preview" id="emptyPreview">Upload some photos to see your collage</div>
-        </div>
-
-        <div class="action-buttons">
-            <button id="downloadBtn" disabled>Download Collage (PNG)</button>
-            <button id="clearBtn" class="button-secondary" disabled>Clear All</button>
-        </div>
-    </div>
+        <section aria-labelledby="preview-heading">
+            <h2 id="preview-heading">Preview</h2>
+            <canvas id="previewCanvas" aria-label="Collage preview"></canvas>
+            <p id="livePreview" role="status">Live preview</p>
+            <p id="emptyPreview" role="status">Upload some photos to see your collage</p>
+            <p>
+                <button id="downloadBtn" type="button" disabled>Download Collage (PNG)</button>
+                <button id="clearBtn" type="button" disabled>Clear All</button>
+            </p>
+        </section>
+    </main>
 
     <script>
         const photos = [];
@@ -351,6 +110,7 @@
         const canvas = $('previewCanvas');
         const ctx = canvas.getContext('2d');
         const emptyPreview = $('emptyPreview');
+        const livePreview = $('livePreview');
         const downloadBtn = $('downloadBtn');
         const clearBtn = $('clearBtn');
 
@@ -462,7 +222,7 @@
         function renderThumbs() {
             thumbsEl.innerHTML = '';
             photos.forEach((p, i) => {
-                const el = document.createElement('div');
+                const el = document.createElement('li');
                 el.className = 'thumb';
                 el.draggable = true;
                 el.dataset.index = i;
@@ -512,6 +272,7 @@
             downloadBtn.disabled = !has;
             clearBtn.disabled = !has;
             emptyPreview.style.display = has ? 'none' : 'block';
+            livePreview.style.display = has ? 'block' : 'none';
             canvas.style.display = has ? 'block' : 'none';
         }
 
