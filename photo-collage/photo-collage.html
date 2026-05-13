@@ -49,17 +49,17 @@
                 <p>
                     <label for="layout">Layout</label>
                     <select id="layout">
-                        <option value="justified-rows" selected>Justified rows (no crop)</option>
-                        <option value="justified-cols">Justified columns (no crop)</option>
-                        <option value="grid">Grid (auto)</option>
-                        <option value="columns">Columns (masonry)</option>
-                        <option value="row">Single row</option>
-                        <option value="column">Single column</option>
+                        <option value="justified-rows" selected>Auto rows</option>
+                        <option value="justified-cols">Auto cols</option>
+                        <option value="grid">Grid</option>
+                        <option value="columns">Masonry</option>
+                        <option value="row">One row</option>
+                        <option value="column">One column</option>
                     </select>
                 </p>
 
-                <p>
-                    <label for="columns">Columns / Rows</label>
+                <p id="columnsField">
+                    <label for="columns">Columns</label>
                     <input type="number" id="columns" value="2" min="1" max="10" step="1">
                 </p>
 
@@ -578,7 +578,8 @@
                 // We want a stable order in `rects` matching photo index
                 const out = new Array(n);
                 for (let c = 0; c < cols; c++) {
-                    let y = innerY;
+                    const colH = colHeights[c] * scale;
+                    let y = innerY + (innerH - colH) / 2;
                     for (const item of colItems[c]) {
                         const h = item.h * scale;
                         out[item.index] = {
@@ -649,6 +650,15 @@
             controls[k].addEventListener('change', render);
         });
 
+        // Show the Columns input only for layouts that use it.
+        const columnsField = $('columnsField');
+        const LAYOUTS_WITH_COLUMNS = new Set(['grid', 'columns']);
+        function updateColumnsVisibility() {
+            const visible = LAYOUTS_WITH_COLUMNS.has(controls.layout.value);
+            columnsField.hidden = !visible;
+        }
+        controls.layout.addEventListener('change', updateColumnsVisibility);
+
         // Ratio preset buttons
         document.querySelectorAll('.preset-btns button').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -682,6 +692,7 @@
 
         // Initial state
         updateButtons();
+        updateColumnsVisibility();
         render();
     </script>
 </body>
