@@ -53,6 +53,9 @@
                         <option value="justified-cols">Auto cols</option>
                         <option value="grid">Grid</option>
                         <option value="columns">Masonry</option>
+                        <option value="hero-grid">Hero + grid</option>
+                        <option value="mosaic">Mosaic</option>
+                        <option value="polaroid">Polaroid scatter</option>
                         <option value="row">One row</option>
                         <option value="column">One column</option>
                     </select>
@@ -61,6 +64,15 @@
                 <p id="columnsField">
                     <label for="columns">Columns</label>
                     <input type="number" id="columns" value="2" min="1" max="10" step="1">
+                </p>
+
+                <p id="heroPosField">
+                    <label for="heroPos">Hero position</label>
+                    <select id="heroPos">
+                        <option value="start">Start</option>
+                        <option value="center" selected>Center</option>
+                        <option value="end">End</option>
+                    </select>
                 </p>
 
                 <p>
@@ -123,6 +135,7 @@
             padding: $('padding'),
             radius: $('radius'),
             bgColor: $('bgColor'),
+            heroPos: $('heroPos'),
         };
 
         // ---------- EXIF date extraction (JPEG only) ----------
@@ -274,6 +287,20 @@
             emptyPreview.style.display = has ? 'none' : 'block';
             livePreview.style.display = has ? 'block' : 'none';
             canvas.style.display = has ? 'block' : 'none';
+            updateLayoutOptionsAvailability();
+        }
+
+        // Hide layout options that don't apply to the current photo count.
+        function updateLayoutOptionsAvailability() {
+            const n = photos.length;
+            const mosaicOpt = controls.layout.querySelector('option[value="mosaic"]');
+            const mosaicAvailable = n >= 1 && n <= 9;
+            mosaicOpt.hidden = !mosaicAvailable;
+            mosaicOpt.disabled = !mosaicAvailable;
+            if (!mosaicAvailable && controls.layout.value === 'mosaic') {
+                controls.layout.value = 'justified-rows';
+                updateLayoutFieldsVisibility();
+            }
         }
 
         // ---------- Layout / drawing ----------
@@ -287,6 +314,7 @@
                 padding: +controls.padding.value,
                 radius: +controls.radius.value,
                 bg: controls.bgColor.value,
+                heroPos: controls.heroPos.value,
             };
         }
 
@@ -499,6 +527,132 @@
             return out;
         }
 
+        // ---------- Mosaic templates ----------
+        // Each template is a structural tree of weighted splits:
+        //   { type:'row', children:[...] }  -> children placed left-to-right, full height,
+        //                                       widths proportional to child weights
+        //   { type:'col', children:[...] }  -> children placed top-to-bottom, full width,
+        //                                       heights proportional to child weights
+        //   { type:'leaf', weight }         -> a photo slot
+        // Weights are relative within a parent (so one child can be twice as wide/tall
+        // as a sibling). Templates intentionally feature a "hero" cell in many cases.
+        // Photos are assigned to leaves by best aspect fit so cropping is minimized,
+        // but the overall composition (sizes, hierarchy) is fixed by the template.
+        // L = landscape-canvas variant, P = portrait-canvas variant.
+        const Lf = (weight) => ({ type: 'leaf', weight: weight ?? 1 });
+        const Row = (weight, ...c) => ({ type: 'row', weight, children: c });
+        const Col = (weight, ...c) => ({ type: 'col', weight, children: c });
+        const MOSAIC_TEMPLATES = {
+            1: { L: Lf(1) },
+            2: {
+                L: Row(1, Lf(1), Lf(1)),
+                P: Col(1, Lf(1), Lf(1)),
+            },
+            // 3: hero on one side, two stacked on the other.
+            3: {
+                L: Row(1, Lf(2), Col(1, Lf(1), Lf(1))),
+                P: Col(1, Lf(2), Row(1, Lf(1), Lf(1))),
+            },
+            // 4: hero + 3 stacked.
+            4: {
+                L: Row(1, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
+                P: Col(1, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
+            },
+            // 5: hero + 4 in a 2x2 grid.
+            5: {
+                L: Row(1, Lf(2), Col(1, Row(1, Lf(1), Lf(1)), Row(1, Lf(1), Lf(1)))),
+                P: Col(1, Lf(2), Col(1, Row(1, Lf(1), Lf(1)), Row(1, Lf(1), Lf(1)))),
+            },
+            // 6: hero + 5 (top: 2 small, bottom: 3 small).
+            6: {
+                L: Row(1,
+                    Col(2, Lf(1), Row(1, Lf(1), Lf(1))),
+                    Col(1, Lf(1), Lf(1), Lf(1)),
+                ),
+                P: Col(1,
+                    Row(2, Lf(1), Col(1, Lf(1), Lf(1))),
+                    Row(1, Lf(1), Lf(1), Lf(1)),
+                ),
+            },
+            // 7: hero + 2 stacked + 4 in a row.
+            7: {
+                L: Col(1,
+                    Row(2, Lf(2), Col(1, Lf(1), Lf(1))),
+                    Row(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+                ),
+                P: Row(1,
+                    Col(2, Lf(2), Row(1, Lf(1), Lf(1))),
+                    Col(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+                ),
+            },
+            // 8: hero + 3 in a column + 4 in a row.
+            8: {
+                L: Col(1,
+                    Row(2, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
+                    Row(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+                ),
+                P: Row(1,
+                    Col(2, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
+                    Col(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+                ),
+            },
+            // 9: hero + 8 around it (top row of 4, right column of 2, bottom row of 2).
+            9: {
+                L: Col(1,
+                    Row(2, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
+                    Row(1, Lf(1), Lf(1), Lf(1), Lf(1), Lf(1)),
+                ),
+                P: Row(1,
+                    Col(2, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
+                    Col(1, Lf(1), Lf(1), Lf(1), Lf(1), Lf(1)),
+                ),
+            },
+        };
+
+        // Collect leaves of a template tree in DFS order (matches reading order).
+        function mosaicLeaves(node, out) {
+            out = out || [];
+            if (node.type === 'leaf') { out.push(node); return out; }
+            for (const c of node.children) mosaicLeaves(c, out);
+            return out;
+        }
+
+        // Place a subtree into rect (x,y,w,h), splitting by child weights.
+        // Writes pixel rects into leaf._rect.
+        function mosaicPlace(node, x, y, w, h, gap) {
+            if (node.type === 'leaf') {
+                node._rect = { x, y, w: Math.max(1, w), h: Math.max(1, h) };
+                return;
+            }
+            const k = node.children.length;
+            const weights = node.children.map(c => c.weight ?? 1);
+            const sum = weights.reduce((a, b) => a + b, 0);
+            const totalGap = gap * (k - 1);
+            if (node.type === 'row') {
+                const innerW = Math.max(1, w - totalGap);
+                let cx = x;
+                for (let i = 0; i < k; i++) {
+                    const cw = innerW * (weights[i] / sum);
+                    mosaicPlace(node.children[i], cx, y, cw, h, gap);
+                    cx += cw + gap;
+                }
+            } else {
+                const innerH = Math.max(1, h - totalGap);
+                let cy = y;
+                for (let i = 0; i < k; i++) {
+                    const ch = innerH * (weights[i] / sum);
+                    mosaicPlace(node.children[i], x, cy, w, ch, gap);
+                    cy += ch + gap;
+                }
+            }
+        }
+
+        // Deep clone a template tree (templates are reused across renders).
+        function mosaicClone(node) {
+            if (node.type === 'leaf') return { type: 'leaf', weight: node.weight };
+            return { type: node.type, weight: node.weight, children: node.children.map(mosaicClone) };
+        }
+
         function computeRects(s, n) {
             const innerX = s.padding;
             const innerY = s.padding;
@@ -532,19 +686,40 @@
             }
 
             if (s.layout === 'grid') {
+                // Variable row heights, no crop. Photos are partitioned into
+                // consecutive chunks of `cols` (last row may be shorter).
+                // Each row fills innerW: H_r = (innerW - gap*(len-1)) / sum(aspects).
+                // The whole stack is scaled down (if needed) to fit innerH and
+                // centered vertically.
                 const cols = Math.min(s.columns, n);
-                const rows = Math.ceil(n / cols);
-                const cellW = (innerW - s.gap * (cols - 1)) / cols;
-                const cellH = (innerH - s.gap * (rows - 1)) / rows;
-                for (let i = 0; i < n; i++) {
-                    const r = Math.floor(i / cols);
-                    const c = i % cols;
-                    rects.push({
-                        x: innerX + c * (cellW + s.gap),
-                        y: innerY + r * (cellH + s.gap),
-                        w: cellW,
-                        h: cellH,
-                    });
+                const aspects = photos.map(p => p.img.naturalWidth / p.img.naturalHeight);
+                const rowDefs = [];
+                let totalH = 0;
+                for (let start = 0; start < n; start += cols) {
+                    const end = Math.min(start + cols, n);
+                    let sumA = 0;
+                    for (let k = start; k < end; k++) sumA += aspects[k];
+                    const availW = innerW - s.gap * (end - start - 1);
+                    const rowH = availW / sumA;
+                    rowDefs.push({ start, end, height: rowH });
+                    totalH += rowH;
+                }
+                totalH += s.gap * (rowDefs.length - 1);
+
+                const scale = Math.min(1, innerH / totalH);
+                const offsetX = innerX + (innerW - innerW * scale) / 2;
+                const offsetY = innerY + (innerH - totalH * scale) / 2;
+
+                let y = offsetY;
+                for (const row of rowDefs) {
+                    const rowH = row.height * scale;
+                    let x = offsetX;
+                    for (let k = row.start; k < row.end; k++) {
+                        const w = aspects[k] * rowH;
+                        rects.push({ x, y, w, h: rowH });
+                        x += w + s.gap * scale;
+                    }
+                    y += rowH + s.gap * scale;
                 }
                 return rects;
             }
@@ -594,6 +769,170 @@
                 return out;
             }
 
+            if (s.layout === 'hero-grid') {
+                if (n === 1) {
+                    rects.push({ x: innerX, y: innerY, w: innerW, h: innerH });
+                    return rects;
+                }
+                // Split direction: vertical band if landscape canvas, horizontal if portrait.
+                const horizontal = innerW > innerH;
+                const heroFrac = 0.5;
+                const pos = s.heroPos; // 'start' | 'center' | 'end'
+                const heroIdx = 0;
+                const restIndices = [];
+                for (let i = 0; i < n; i++) if (i !== heroIdx) restIndices.push(i);
+
+                // Compute hero rect and grid region(s).
+                let heroRect;
+                const gridRegions = []; // each: { x, y, w, h, indices }
+                if (horizontal) {
+                    const heroW = innerW * heroFrac;
+                    const restW = innerW - heroW - s.gap;
+                    if (pos === 'start') {
+                        heroRect = { x: innerX, y: innerY, w: heroW, h: innerH };
+                        gridRegions.push({ x: innerX + heroW + s.gap, y: innerY, w: restW, h: innerH, indices: restIndices });
+                    } else if (pos === 'end') {
+                        heroRect = { x: innerX + restW + s.gap, y: innerY, w: heroW, h: innerH };
+                        gridRegions.push({ x: innerX, y: innerY, w: restW, h: innerH, indices: restIndices });
+                    } else {
+                        // center: grid on both sides, split evenly
+                        const sideW = (innerW - heroW - 2 * s.gap) / 2;
+                        heroRect = { x: innerX + sideW + s.gap, y: innerY, w: heroW, h: innerH };
+                        const half = Math.ceil(restIndices.length / 2);
+                        gridRegions.push({ x: innerX, y: innerY, w: sideW, h: innerH, indices: restIndices.slice(0, half) });
+                        gridRegions.push({ x: innerX + sideW + s.gap + heroW + s.gap, y: innerY, w: sideW, h: innerH, indices: restIndices.slice(half) });
+                    }
+                } else {
+                    const heroH = innerH * heroFrac;
+                    const restH = innerH - heroH - s.gap;
+                    if (pos === 'start') {
+                        heroRect = { x: innerX, y: innerY, w: innerW, h: heroH };
+                        gridRegions.push({ x: innerX, y: innerY + heroH + s.gap, w: innerW, h: restH, indices: restIndices });
+                    } else if (pos === 'end') {
+                        heroRect = { x: innerX, y: innerY + restH + s.gap, w: innerW, h: heroH };
+                        gridRegions.push({ x: innerX, y: innerY, w: innerW, h: restH, indices: restIndices });
+                    } else {
+                        const sideH = (innerH - heroH - 2 * s.gap) / 2;
+                        heroRect = { x: innerX, y: innerY + sideH + s.gap, w: innerW, h: heroH };
+                        const half = Math.ceil(restIndices.length / 2);
+                        gridRegions.push({ x: innerX, y: innerY, w: innerW, h: sideH, indices: restIndices.slice(0, half) });
+                        gridRegions.push({ x: innerX, y: innerY + sideH + s.gap + heroH + s.gap, w: innerW, h: sideH, indices: restIndices.slice(half) });
+                    }
+                }
+
+                const out = new Array(n);
+                out[heroIdx] = heroRect;
+
+                // For each grid region, lay out using variable-row-height algorithm.
+                for (const region of gridRegions) {
+                    const idxs = region.indices;
+                    if (idxs.length === 0) continue;
+                    const aspects = idxs.map(i => photos[i].img.naturalWidth / photos[i].img.naturalHeight);
+                    const cols = Math.max(1, Math.min(idxs.length, Math.round(Math.sqrt(idxs.length))));
+                    const rowDefs = [];
+                    let totalH = 0;
+                    for (let start = 0; start < idxs.length; start += cols) {
+                        const end = Math.min(start + cols, idxs.length);
+                        let sumA = 0;
+                        for (let k = start; k < end; k++) sumA += aspects[k];
+                        const availW = region.w - s.gap * (end - start - 1);
+                        const rowH = availW / sumA;
+                        rowDefs.push({ start, end, height: rowH });
+                        totalH += rowH;
+                    }
+                    totalH += s.gap * (rowDefs.length - 1);
+                    const scale = Math.min(1, region.h / totalH);
+                    const offX = region.x + (region.w - region.w * scale) / 2;
+                    const offY = region.y + (region.h - totalH * scale) / 2;
+                    let y = offY;
+                    for (const row of rowDefs) {
+                        const rowH = row.height * scale;
+                        let x = offX;
+                        for (let k = row.start; k < row.end; k++) {
+                            const w = aspects[k] * rowH;
+                            out[idxs[k]] = { x, y, w, h: rowH };
+                            x += w + s.gap * scale;
+                        }
+                        y += rowH + s.gap * scale;
+                    }
+                }
+
+                return out;
+            }
+
+            if (s.layout === 'mosaic') {
+                const tplDef = MOSAIC_TEMPLATES[n];
+                if (!tplDef) return rects; // safety: should be hidden when n>9
+                const orient = innerW >= innerH ? 'L' : 'P';
+                const tree = mosaicClone(tplDef[orient] || tplDef.L);
+
+                // Place template by weights -> each leaf gets its target rect.
+                mosaicPlace(tree, innerX, innerY, innerW, innerH, s.gap);
+                const leaves = mosaicLeaves(tree);
+
+                // Greedy assignment: largest cells first pick the photo whose aspect
+                // best matches the cell's aspect (log-distance, scale-invariant).
+                // This minimizes cropping in the most visible cells (e.g. the hero).
+                const cells = leaves
+                    .map((leaf, i) => ({ leaf, area: leaf._rect.w * leaf._rect.h, order: i }))
+                    .sort((a, b) => b.area - a.area);
+
+                const taken = new Set();
+                const out = new Array(n);
+                for (const cell of cells) {
+                    const ca = cell.leaf._rect.w / cell.leaf._rect.h;
+                    const caLog = Math.log(ca);
+                    let bestPhoto = -1;
+                    let bestCost = Infinity;
+                    for (let i = 0; i < n; i++) {
+                        if (taken.has(i)) continue;
+                        const ar = photos[i].img.naturalWidth / photos[i].img.naturalHeight;
+                        const cost = Math.abs(Math.log(ar) - caLog);
+                        if (cost < bestCost - 1e-9) {
+                            bestCost = cost;
+                            bestPhoto = i;
+                        }
+                    }
+                    taken.add(bestPhoto);
+                    out[bestPhoto] = cell.leaf._rect;
+                }
+                return out;
+            }
+
+            if (s.layout === 'polaroid') {
+                // Deterministic pseudo-random for stable layouts across renders.
+                function rand(seed) {
+                    let x = Math.sin(seed * 9301 + 49297) * 233280;
+                    return x - Math.floor(x);
+                }
+                // Target polaroid photo-content width ~= sqrt(canvasArea / n) * 1.2
+                // so a few overlap nicely.
+                const targetW = Math.sqrt((innerW * innerH) / Math.max(n, 1)) * 1.2;
+                const borderSide = targetW * 0.06;
+                const borderBottom = targetW * 0.22;
+                const maxRot = 12 * Math.PI / 180;
+
+                const out = new Array(n);
+                for (let i = 0; i < n; i++) {
+                    const ar = photos[i].img.naturalWidth / photos[i].img.naturalHeight;
+                    const photoW = targetW;
+                    const photoH = targetW / ar;
+                    const frameW = photoW + 2 * borderSide;
+                    const frameH = photoH + borderSide + borderBottom;
+                    // Position the polaroid center somewhere in the canvas;
+                    // allow some overflow so edges look natural.
+                    const margin = Math.min(frameW, frameH) * 0.3;
+                    const cx = innerX + margin + rand(i * 2 + 1) * (innerW - 2 * margin);
+                    const cy = innerY + margin + rand(i * 2 + 2) * (innerH - 2 * margin);
+                    const rotation = (rand(i * 2 + 3) * 2 - 1) * maxRot;
+                    out[i] = {
+                        rotation,
+                        polaroid: { borderSide, borderBottom, cx, cy, frameW, frameH },
+                    };
+                }
+                return out;
+            }
+
             return rects;
         }
 
@@ -611,8 +950,37 @@
             for (let i = 0; i < photos.length; i++) {
                 const r = rects[i];
                 if (!r) continue;
-                drawCover(ctx, photos[i].img, r.x, r.y, r.w, r.h, s.radius);
+                if (r.polaroid) {
+                    drawPolaroid(ctx, photos[i].img, r);
+                } else {
+                    drawCover(ctx, photos[i].img, r.x, r.y, r.w, r.h, s.radius);
+                }
             }
+        }
+
+        function drawPolaroid(c, img, r) {
+            const { borderSide, borderBottom, cx, cy, frameW, frameH } = r.polaroid;
+            c.save();
+            c.translate(cx, cy);
+            c.rotate(r.rotation);
+            // Frame (white with subtle shadow)
+            c.shadowColor = 'rgba(0,0,0,0.25)';
+            c.shadowBlur = Math.max(4, frameW * 0.04);
+            c.shadowOffsetX = 0;
+            c.shadowOffsetY = Math.max(2, frameW * 0.02);
+            c.fillStyle = '#ffffff';
+            c.fillRect(-frameW / 2, -frameH / 2, frameW, frameH);
+            // Photo content (cover-fit inside the photo rect, no shadow)
+            c.shadowColor = 'transparent';
+            c.shadowBlur = 0;
+            c.shadowOffsetX = 0;
+            c.shadowOffsetY = 0;
+            const photoW = frameW - 2 * borderSide;
+            const photoH = frameH - borderSide - borderBottom;
+            const photoX = -frameW / 2 + borderSide;
+            const photoY = -frameH / 2 + borderSide;
+            drawCover(c, img, photoX, photoY, photoW, photoH, 0);
+            c.restore();
         }
 
         // ---------- Wire up ----------
@@ -649,15 +1017,18 @@
             controls[k].addEventListener('input', render);
             controls[k].addEventListener('change', render);
         });
+        controls.heroPos.addEventListener('change', render);
 
-        // Show the Columns input only for layouts that use it.
+        // Show layout-specific fields only when relevant.
         const columnsField = $('columnsField');
+        const heroPosField = $('heroPosField');
         const LAYOUTS_WITH_COLUMNS = new Set(['grid', 'columns']);
-        function updateColumnsVisibility() {
-            const visible = LAYOUTS_WITH_COLUMNS.has(controls.layout.value);
-            columnsField.hidden = !visible;
+        function updateLayoutFieldsVisibility() {
+            const layout = controls.layout.value;
+            columnsField.hidden = !LAYOUTS_WITH_COLUMNS.has(layout);
+            heroPosField.hidden = layout !== 'hero-grid';
         }
-        controls.layout.addEventListener('change', updateColumnsVisibility);
+        controls.layout.addEventListener('change', updateLayoutFieldsVisibility);
 
         // Ratio preset buttons
         document.querySelectorAll('.preset-btns button').forEach(btn => {
@@ -692,7 +1063,7 @@
 
         // Initial state
         updateButtons();
-        updateColumnsVisibility();
+        updateLayoutFieldsVisibility();
         render();
     </script>
 </body>
