@@ -1,1070 +1,1452 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Photo Collage Maker</title>
-</head>
-<body>
-    <main>
-        <header>
-            <h1>Photo Collage Maker</h1>
-            <p>Upload photos, arrange them automatically by date taken, and download a collage. The default justified layout shows every photo in full -- no cropping, no edge gaps. No uploads to any server.</p>
-        </header>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
 
-        <section aria-labelledby="upload-heading">
+      main {
+        max-width: 1400px;
+        margin-inline: auto;
+        padding: 48px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+      }
+
+      header {
+        text-align: center;
+      }
+      h1 {
+        font-size: 40px;
+        margin: 0;
+      }
+      h2 {
+        font-size: 26px;
+        margin: 0;
+        text-align: left;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 48px;
+        align-items: start;
+      }
+
+      section {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+      }
+
+      .left-col {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        min-width: 0;
+      }
+
+      .col-right {
+        min-width: 0;
+        position: sticky;
+        top: 24px;
+      }
+
+      .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      #uploadArea {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 48px 20px;
+        width: 100%;
+        cursor: pointer;
+        font-size: 15px;
+        text-align: center;
+      }
+      #uploadArea > :first-child {
+        font-size: 40px;
+        line-height: 1;
+      }
+
+      #thumbs {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        gap: 8px;
+        width: 100%;
+      }
+      #thumbs:empty {
+        display: none;
+      }
+
+      #clearBtn {
+        align-self: flex-start;
+      }
+
+      .thumb {
+        position: relative;
+        aspect-ratio: 1;
+      }
+      .thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .thumb .remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+      }
+      .thumb .order {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        font-size: 12px;
+        padding: 2px 6px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+        width: 100%;
+      }
+
+      .control-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 12px 16px;
+        width: 100%;
+      }
+
+      .field {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+      .field input[type="number"] {
+        width: 80px;
+      }
+      .field input[type="range"] {
+        width: 140px;
+      }
+
+      .preset-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-start;
+      }
+
+      #previewWrap {
+        width: 100%;
+        max-height: 80vh;
+        display: grid;
+        place-items: center;
+        border: 1px solid #ccc;
+      }
+      #previewCanvas {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+      }
+      #previewPlaceholder {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+        .col-right {
+          position: static;
+        }
+      }
+
+      @media (max-width: 640px) {
+        main {
+          padding: 24px 16px;
+          gap: 32px;
+        }
+        h1 {
+          font-size: 30px;
+        }
+        h2 {
+          font-size: 22px;
+        }
+        #uploadArea {
+          padding: 36px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Photo Collage Maker</h1>
+      </header>
+
+      <div class="layout">
+        <div class="left-col">
+          <section aria-labelledby="upload-heading">
             <h2 id="upload-heading">Add photos</h2>
             <label id="uploadArea" for="fileInput">
-                <span aria-hidden="true">+</span>
-                <span><strong>Drop photos here</strong> or click to browse</span>
-                <span>Any number of images. JPEG, PNG, WebP supported.</span>
+              <span aria-hidden="true">+</span>
+              <span><strong>Drop photos here</strong> or click to browse</span>
+              <span>Any number of images. JPEG, PNG, WebP supported.</span>
             </label>
-            <input type="file" id="fileInput" accept="image/*" multiple hidden>
+            <input
+              type="file"
+              id="fileInput"
+              accept="image/*"
+              multiple
+              hidden
+            />
             <ul id="thumbs" aria-label="Uploaded photos"></ul>
-        </section>
+            <button id="clearBtn" type="button" disabled>Clear All</button>
+          </section>
 
-        <section aria-labelledby="settings-heading">
-            <h2 id="settings-heading">Collage settings</h2>
+          <section aria-labelledby="settings-heading">
+            <h2 id="settings-heading">Configure outcome</h2>
             <form>
-                <fieldset>
-                    <legend>Output size (px)</legend>
-                    <p>
-                        <label for="outWidth">Width</label>
-                        <input type="number" id="outWidth" value="800" min="100" max="10000" step="10">
-                    </p>
-                    <p>
-                        <label for="outHeight">Height</label>
-                        <input type="number" id="outHeight" value="1200" min="100" max="10000" step="10">
-                    </p>
-                    <div class="preset-btns" role="group" aria-label="Aspect ratio presets">
-                        <button type="button" data-w="800" data-h="1200">2:3</button>
-                        <button type="button" data-w="1200" data-h="800">3:2</button>
-                        <button type="button" data-w="1080" data-h="1080">1:1</button>
-                        <button type="button" data-w="1080" data-h="1920">9:16</button>
-                        <button type="button" data-w="1920" data-h="1080">16:9</button>
-                        <button type="button" data-w="1240" data-h="1748">A4</button>
-                    </div>
-                </fieldset>
+              <div class="control-row" role="group" aria-label="Canvas size">
+                <label class="field">
+                  <span>Width</span>
+                  <input
+                    type="number"
+                    id="outWidth"
+                    value="800"
+                    min="100"
+                    max="10000"
+                    step="10"
+                  />
+                </label>
+                <label class="field">
+                  <span>Height</span>
+                  <input
+                    type="number"
+                    id="outHeight"
+                    value="1200"
+                    min="100"
+                    max="10000"
+                    step="10"
+                  />
+                </label>
+                <div
+                  class="preset-btns"
+                  role="group"
+                  aria-label="Aspect ratio presets"
+                >
+                  <button type="button" data-w="800" data-h="1200">2:3</button>
+                  <button type="button" data-w="1200" data-h="800">3:2</button>
+                  <button type="button" data-w="1080" data-h="1080">1:1</button>
+                  <button type="button" data-w="1080" data-h="1920">
+                    9:16
+                  </button>
+                  <button type="button" data-w="1920" data-h="1080">
+                    16:9
+                  </button>
+                  <button type="button" data-w="1240" data-h="1748">A4</button>
+                </div>
+              </div>
 
-                <p>
-                    <label for="layout">Layout</label>
-                    <select id="layout">
-                        <option value="justified-rows" selected>Auto rows</option>
-                        <option value="justified-cols">Auto cols</option>
-                        <option value="grid">Grid</option>
-                        <option value="columns">Masonry</option>
-                        <option value="hero-grid">Hero + grid</option>
-                        <option value="mosaic">Mosaic</option>
-                        <option value="polaroid">Polaroid scatter</option>
-                        <option value="row">One row</option>
-                        <option value="column">One column</option>
-                    </select>
-                </p>
+              <div class="control-row" role="group" aria-label="Layout options">
+                <label class="field">
+                  <span>Layout</span>
+                  <select id="layout">
+                    <option value="justified-rows" selected>Auto rows</option>
+                    <option value="justified-cols">Auto cols</option>
+                    <option value="grid">Grid</option>
+                    <option value="columns">Masonry</option>
+                    <option value="hero-grid">Hero + grid</option>
+                    <option value="mosaic">Mosaic</option>
+                    <option value="polaroid">Polaroid scatter</option>
+                    <option value="row">One row</option>
+                    <option value="column">One column</option>
+                  </select>
+                </label>
+                <label class="field" id="columnsField">
+                  <span>Columns</span>
+                  <input
+                    type="number"
+                    id="columns"
+                    value="2"
+                    min="1"
+                    max="10"
+                    step="1"
+                  />
+                </label>
+                <label class="field" id="heroPosField">
+                  <span>Hero position</span>
+                  <select id="heroPos">
+                    <option value="start">Start</option>
+                    <option value="center" selected>Center</option>
+                    <option value="end">End</option>
+                  </select>
+                </label>
+              </div>
 
-                <p id="columnsField">
-                    <label for="columns">Columns</label>
-                    <input type="number" id="columns" value="2" min="1" max="10" step="1">
-                </p>
-
-                <p id="heroPosField">
-                    <label for="heroPos">Hero position</label>
-                    <select id="heroPos">
-                        <option value="start">Start</option>
-                        <option value="center" selected>Center</option>
-                        <option value="end">End</option>
-                    </select>
-                </p>
-
-                <p>
-                    <label for="gap">Gap</label>
-                    <input type="range" id="gap" min="0" max="60" value="8">
-                    <output id="gapVal" for="gap">8</output>
-                </p>
-
-                <p>
-                    <label for="padding">Padding</label>
-                    <input type="range" id="padding" min="0" max="100" value="12">
-                    <output id="paddingVal" for="padding">12</output>
-                </p>
-
-                <p>
-                    <label for="radius">Corner radius</label>
-                    <input type="range" id="radius" min="0" max="60" value="0">
-                    <output id="radiusVal" for="radius">0</output>
-                </p>
-
-                <p>
-                    <label for="bgColor">Background</label>
-                    <input type="color" id="bgColor" value="#ffffff">
-                </p>
+              <div class="control-row" role="group" aria-label="Appearance">
+                <label class="field">
+                  <span>Background</span>
+                  <input type="color" id="bgColor" value="#ffffff" />
+                </label>
+                <label class="field">
+                  <span>Gap</span>
+                  <input type="range" id="gap" min="0" max="60" value="8" />
+                  <output id="gapVal" for="gap">8</output>
+                </label>
+                <label class="field">
+                  <span>Corner radius</span>
+                  <input type="range" id="radius" min="0" max="60" value="0" />
+                  <output id="radiusVal" for="radius">0</output>
+                </label>
+              </div>
             </form>
-        </section>
-
-        <section aria-labelledby="preview-heading">
-            <h2 id="preview-heading">Preview</h2>
+          </section>
+        </div>
+        <section class="col-right" aria-labelledby="preview-heading">
+          <div class="preview-header">
+            <h2 id="preview-heading">See preview</h2>
+            <button id="downloadBtn" type="button" disabled>
+              Download Collage (PNG)
+            </button>
+          </div>
+          <div id="previewWrap">
             <canvas id="previewCanvas" aria-label="Collage preview"></canvas>
-            <p id="livePreview" role="status">Live preview</p>
-            <p id="emptyPreview" role="status">Upload some photos to see your collage</p>
-            <p>
-                <button id="downloadBtn" type="button" disabled>Download Collage (PNG)</button>
-                <button id="clearBtn" type="button" disabled>Clear All</button>
-            </p>
+            <p id="previewPlaceholder" role="status">Live preview</p>
+          </div>
         </section>
+      </div>
     </main>
 
     <script>
-        const photos = [];
+      const photos = [];
 
-        const $ = id => document.getElementById(id);
-        const uploadArea = $('uploadArea');
-        const fileInput = $('fileInput');
-        const thumbsEl = $('thumbs');
-        const canvas = $('previewCanvas');
-        const ctx = canvas.getContext('2d');
-        const emptyPreview = $('emptyPreview');
-        const livePreview = $('livePreview');
-        const downloadBtn = $('downloadBtn');
-        const clearBtn = $('clearBtn');
+      const $ = (id) => document.getElementById(id);
+      const uploadArea = $("uploadArea");
+      const fileInput = $("fileInput");
+      const thumbsEl = $("thumbs");
+      const canvas = $("previewCanvas");
+      const ctx = canvas.getContext("2d");
+      const previewWrap = $("previewWrap");
+      const previewPlaceholder = $("previewPlaceholder");
+      const downloadBtn = $("downloadBtn");
+      const clearBtn = $("clearBtn");
 
-        const controls = {
-            outWidth: $('outWidth'),
-            outHeight: $('outHeight'),
-            layout: $('layout'),
-            columns: $('columns'),
-            gap: $('gap'),
-            padding: $('padding'),
-            radius: $('radius'),
-            bgColor: $('bgColor'),
-            heroPos: $('heroPos'),
-        };
+      const controls = {
+        outWidth: $("outWidth"),
+        outHeight: $("outHeight"),
+        layout: $("layout"),
+        columns: $("columns"),
+        gap: $("gap"),
+        radius: $("radius"),
+        bgColor: $("bgColor"),
+        heroPos: $("heroPos"),
+      };
 
-        // ---------- EXIF date extraction (JPEG only) ----------
-        // Returns a Date or null. Reads DateTimeOriginal (0x9003) from EXIF SubIFD.
-        async function readExifDate(file) {
-            if (!/jpeg|jpg/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) return null;
-            try {
-                const buf = await file.slice(0, 256 * 1024).arrayBuffer();
-                const view = new DataView(buf);
-                if (view.getUint16(0) !== 0xFFD8) return null;
-                let offset = 2;
-                const len = view.byteLength;
-                while (offset < len) {
-                    if (view.getUint8(offset) !== 0xFF) return null;
-                    const marker = view.getUint8(offset + 1);
-                    const size = view.getUint16(offset + 2);
-                    if (marker === 0xE1) {
-                        // APP1 -- check Exif header
-                        if (view.getUint32(offset + 4) !== 0x45786966) return null; // "Exif"
-                        const tiffStart = offset + 10;
-                        const little = view.getUint16(tiffStart) === 0x4949;
-                        const get16 = o => little ? view.getUint16(o, true) : view.getUint16(o, false);
-                        const get32 = o => little ? view.getUint32(o, true) : view.getUint32(o, false);
-                        if (get16(tiffStart + 2) !== 0x002A) return null;
-                        const ifd0 = tiffStart + get32(tiffStart + 4);
-                        const numEntries = get16(ifd0);
-                        let exifIfdOffset = null;
-                        for (let i = 0; i < numEntries; i++) {
-                            const e = ifd0 + 2 + i * 12;
-                            const tag = get16(e);
-                            if (tag === 0x8769) { // ExifOffset
-                                exifIfdOffset = tiffStart + get32(e + 8);
-                                break;
-                            }
-                        }
-                        if (!exifIfdOffset) return null;
-                        const subEntries = get16(exifIfdOffset);
-                        for (let i = 0; i < subEntries; i++) {
-                            const e = exifIfdOffset + 2 + i * 12;
-                            const tag = get16(e);
-                            // 0x9003 DateTimeOriginal, 0x9004 DateTimeDigitized, 0x0132 DateTime
-                            if (tag === 0x9003 || tag === 0x9004) {
-                                const count = get32(e + 4);
-                                const valOffset = tiffStart + get32(e + 8);
-                                let str = '';
-                                for (let j = 0; j < count - 1; j++) {
-                                    str += String.fromCharCode(view.getUint8(valOffset + j));
-                                }
-                                // Format: "YYYY:MM:DD HH:MM:SS"
-                                const m = str.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
-                                if (m) {
-                                    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
-                                }
-                            }
-                        }
-                        return null;
-                    } else {
-                        offset += 2 + size;
-                    }
+      // ---------- EXIF date extraction (JPEG only) ----------
+      // Returns a Date or null. Reads DateTimeOriginal (0x9003) from EXIF SubIFD.
+      async function readExifDate(file) {
+        if (!/jpeg|jpg/i.test(file.type) && !/\.jpe?g$/i.test(file.name))
+          return null;
+        try {
+          const buf = await file.slice(0, 256 * 1024).arrayBuffer();
+          const view = new DataView(buf);
+          if (view.getUint16(0) !== 0xffd8) return null;
+          let offset = 2;
+          const len = view.byteLength;
+          while (offset < len) {
+            if (view.getUint8(offset) !== 0xff) return null;
+            const marker = view.getUint8(offset + 1);
+            const size = view.getUint16(offset + 2);
+            if (marker === 0xe1) {
+              // APP1 -- check Exif header
+              if (view.getUint32(offset + 4) !== 0x45786966) return null; // "Exif"
+              const tiffStart = offset + 10;
+              const little = view.getUint16(tiffStart) === 0x4949;
+              const get16 = (o) =>
+                little ? view.getUint16(o, true) : view.getUint16(o, false);
+              const get32 = (o) =>
+                little ? view.getUint32(o, true) : view.getUint32(o, false);
+              if (get16(tiffStart + 2) !== 0x002a) return null;
+              const ifd0 = tiffStart + get32(tiffStart + 4);
+              const numEntries = get16(ifd0);
+              let exifIfdOffset = null;
+              for (let i = 0; i < numEntries; i++) {
+                const e = ifd0 + 2 + i * 12;
+                const tag = get16(e);
+                if (tag === 0x8769) {
+                  // ExifOffset
+                  exifIfdOffset = tiffStart + get32(e + 8);
+                  break;
                 }
-            } catch (e) {
-                return null;
+              }
+              if (!exifIfdOffset) return null;
+              const subEntries = get16(exifIfdOffset);
+              for (let i = 0; i < subEntries; i++) {
+                const e = exifIfdOffset + 2 + i * 12;
+                const tag = get16(e);
+                // 0x9003 DateTimeOriginal, 0x9004 DateTimeDigitized, 0x0132 DateTime
+                if (tag === 0x9003 || tag === 0x9004) {
+                  const count = get32(e + 4);
+                  const valOffset = tiffStart + get32(e + 8);
+                  let str = "";
+                  for (let j = 0; j < count - 1; j++) {
+                    str += String.fromCharCode(view.getUint8(valOffset + j));
+                  }
+                  // Format: "YYYY:MM:DD HH:MM:SS"
+                  const m = str.match(
+                    /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/,
+                  );
+                  if (m) {
+                    return new Date(
+                      +m[1],
+                      +m[2] - 1,
+                      +m[3],
+                      +m[4],
+                      +m[5],
+                      +m[6],
+                    );
+                  }
+                }
+              }
+              return null;
+            } else {
+              offset += 2 + size;
             }
-            return null;
+          }
+        } catch (e) {
+          return null;
         }
+        return null;
+      }
 
-        function loadImage(file) {
-            return new Promise((resolve, reject) => {
-                const url = URL.createObjectURL(file);
-                const img = new Image();
-                img.onload = () => resolve({ img, url });
-                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')); };
-                img.src = url;
-            });
-        }
+      function loadImage(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => resolve({ img, url });
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("load failed"));
+          };
+          img.src = url;
+        });
+      }
 
-        async function addFiles(fileList) {
-            const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-            if (!files.length) return;
+      async function addFiles(fileList) {
+        const files = Array.from(fileList).filter((f) =>
+          f.type.startsWith("image/"),
+        );
+        if (!files.length) return;
 
-            const newPhotos = await Promise.all(files.map(async (file) => {
-                const exifDate = await readExifDate(file);
-                const date = exifDate || new Date(file.lastModified);
-                const { img, url } = await loadImage(file);
-                return { file, img, url, date, name: file.name };
-            }));
+        const newPhotos = await Promise.all(
+          files.map(async (file) => {
+            const exifDate = await readExifDate(file);
+            const date = exifDate || new Date(file.lastModified);
+            const { img, url } = await loadImage(file);
+            return { file, img, url, date, name: file.name };
+          }),
+        );
 
-            // Sort the newly-added batch by date taken (oldest first), then append.
-            newPhotos.sort((a, b) => a.date - b.date);
-            photos.push(...newPhotos);
+        // Sort the newly-added batch by date taken (oldest first), then append.
+        newPhotos.sort((a, b) => a.date - b.date);
+        photos.push(...newPhotos);
 
-            renderThumbs();
-            render();
-            updateButtons();
-        }
+        renderThumbs();
+        render();
+        updateButtons();
+      }
 
-        function renderThumbs() {
-            thumbsEl.innerHTML = '';
-            photos.forEach((p, i) => {
-                const el = document.createElement('li');
-                el.className = 'thumb';
-                el.draggable = true;
-                el.dataset.index = i;
-                el.innerHTML = `
+      function renderThumbs() {
+        thumbsEl.innerHTML = "";
+        photos.forEach((p, i) => {
+          const el = document.createElement("li");
+          el.className = "thumb";
+          el.draggable = true;
+          el.dataset.index = i;
+          el.innerHTML = `
                     <img src="${p.url}" alt="">
                     <span class="order">${i + 1}</span>
                     <button class="remove" title="Remove">x</button>
                 `;
-                el.querySelector('.remove').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    URL.revokeObjectURL(p.url);
-                    photos.splice(i, 1);
-                    renderThumbs();
-                    render();
-                    updateButtons();
-                });
-
-                el.addEventListener('dragstart', (e) => {
-                    el.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', String(i));
-                });
-                el.addEventListener('dragend', () => el.classList.remove('dragging'));
-                el.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    el.classList.add('drag-over');
-                });
-                el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-                el.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    el.classList.remove('drag-over');
-                    const from = +e.dataTransfer.getData('text/plain');
-                    const to = +el.dataset.index;
-                    if (isNaN(from) || from === to) return;
-                    const [moved] = photos.splice(from, 1);
-                    photos.splice(to, 0, moved);
-                    renderThumbs();
-                    render();
-                });
-
-                thumbsEl.appendChild(el);
-            });
-        }
-
-        function updateButtons() {
-            const has = photos.length > 0;
-            downloadBtn.disabled = !has;
-            clearBtn.disabled = !has;
-            emptyPreview.style.display = has ? 'none' : 'block';
-            livePreview.style.display = has ? 'block' : 'none';
-            canvas.style.display = has ? 'block' : 'none';
-            updateLayoutOptionsAvailability();
-        }
-
-        // Hide layout options that don't apply to the current photo count.
-        function updateLayoutOptionsAvailability() {
-            const n = photos.length;
-            const mosaicOpt = controls.layout.querySelector('option[value="mosaic"]');
-            const mosaicAvailable = n >= 1 && n <= 9;
-            mosaicOpt.hidden = !mosaicAvailable;
-            mosaicOpt.disabled = !mosaicAvailable;
-            if (!mosaicAvailable && controls.layout.value === 'mosaic') {
-                controls.layout.value = 'justified-rows';
-                updateLayoutFieldsVisibility();
-            }
-        }
-
-        // ---------- Layout / drawing ----------
-        function getSettings() {
-            return {
-                W: Math.max(100, +controls.outWidth.value || 800),
-                H: Math.max(100, +controls.outHeight.value || 1200),
-                layout: controls.layout.value,
-                columns: Math.max(1, +controls.columns.value || 1),
-                gap: +controls.gap.value,
-                padding: +controls.padding.value,
-                radius: +controls.radius.value,
-                bg: controls.bgColor.value,
-                heroPos: controls.heroPos.value,
-            };
-        }
-
-        function roundedRectPath(c, x, y, w, h, r) {
-            r = Math.min(r, w / 2, h / 2);
-            c.beginPath();
-            c.moveTo(x + r, y);
-            c.lineTo(x + w - r, y);
-            c.quadraticCurveTo(x + w, y, x + w, y + r);
-            c.lineTo(x + w, y + h - r);
-            c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            c.lineTo(x + r, y + h);
-            c.quadraticCurveTo(x, y + h, x, y + h - r);
-            c.lineTo(x, y + r);
-            c.quadraticCurveTo(x, y, x + r, y);
-            c.closePath();
-        }
-
-        // Draw image to fill rect (object-fit: cover)
-        function drawCover(c, img, x, y, w, h, r) {
-            if (w <= 0 || h <= 0) return;
-            c.save();
-            if (r > 0) {
-                roundedRectPath(c, x, y, w, h, r);
-                c.clip();
-            } else {
-                c.beginPath();
-                c.rect(x, y, w, h);
-                c.clip();
-            }
-            const ir = img.naturalWidth / img.naturalHeight;
-            const tr = w / h;
-            let sx, sy, sw, sh;
-            if (ir > tr) {
-                sh = img.naturalHeight;
-                sw = sh * tr;
-                sx = (img.naturalWidth - sw) / 2;
-                sy = 0;
-            } else {
-                sw = img.naturalWidth;
-                sh = sw / tr;
-                sx = 0;
-                sy = (img.naturalHeight - sh) / 2;
-            }
-            c.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-            c.restore();
-        }
-
-        // Justified layout. Every photo is shown in full (no crop).
-        //
-        // Two directions:
-        //   transpose=false (rows):    photos packed into rows that fill the
-        //                              canvas WIDTH; rows stack vertically and
-        //                              each row has its own height.
-        //   transpose=true  (columns): photos packed into columns that fill the
-        //                              canvas HEIGHT; columns stack horizontally
-        //                              and each column has its own width.
-        //
-        // The two modes are mathematical transposes of each other. We implement
-        // the row mode and reuse it for columns by transposing the canvas
-        // dimensions and aspect ratios on input, then transposing the output
-        // rectangles before returning.
-        //
-        // For arbitrary mixed aspect ratios + a fixed canvas it's mathematically
-        // impossible to always fill the canvas exactly with no cropping. So we:
-        //   1. Try every possible number of rows (1..N) and find the optimal
-        //      consecutive-partition for each via linear-partition DP that
-        //      balances row aspect sums (so rows have similar heights).
-        //   2. For each candidate, scale the stack uniformly to fit inside
-        //      innerW x innerH while preserving aspect ratios (no crop).
-        //   3. Pick the row count whose scaled stack covers the largest
-        //      fraction of the canvas (smallest leftover gap area).
-        //   4. Center the stack on the canvas; the background color fills any
-        //      leftover strip on the side or bottom.
-        function computeJustified(s, innerX, innerY, innerW, innerH, transpose) {
-            // For column mode, transpose the problem: swap canvas dimensions
-            // and use 1/aspect (since each photo's role of width <-> height swaps).
-            const W = transpose ? innerH : innerW;
-            const H = transpose ? innerW : innerH;
-            const aspects = photos.map(p => {
-                const a = p.img.naturalWidth / p.img.naturalHeight;
-                return transpose ? 1 / a : a;
-            });
-            const n = aspects.length;
-            if (n === 0) return [];
-
-            // Build optimal row partitions via linear partition DP.
-            // We minimize the maximum row aspect-sum (classic linear partition)
-            // which yields rows with similar heights when each fills the width.
-            function partition(k) {
-                if (k >= n) k = n;
-                if (k <= 1) return [n];
-                // dp[i][j] = best (min of max row aspect sum) for first i photos
-                // split into j rows. parent[i][j] = best previous boundary.
-                const prefix = new Array(n + 1).fill(0);
-                for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + aspects[i];
-                const dp = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(Infinity));
-                const parent = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(0));
-                dp[0][0] = 0;
-                for (let i = 1; i <= n; i++) {
-                    dp[i][1] = prefix[i];
-                    parent[i][1] = 0;
-                }
-                for (let j = 2; j <= k; j++) {
-                    for (let i = j; i <= n; i++) {
-                        for (let p = j - 1; p < i; p++) {
-                            const cost = Math.max(dp[p][j - 1], prefix[i] - prefix[p]);
-                            if (cost < dp[i][j]) {
-                                dp[i][j] = cost;
-                                parent[i][j] = p;
-                            }
-                        }
-                    }
-                }
-                const breaks = [];
-                let i = n, j = k;
-                while (j > 0) {
-                    breaks.push(i);
-                    i = parent[i][j];
-                    j--;
-                }
-                breaks.reverse();
-                // breaks = [end1, end2, ..., n]
-                return breaks;
-            }
-
-            // For a given list of row-end indices, compute the layout assuming
-            // each row exactly fills W (transposed-aware).
-            function buildRows(breaks) {
-                const rows = [];
-                let start = 0;
-                let totalH = 0;
-                for (let bi = 0; bi < breaks.length; bi++) {
-                    const end = breaks[bi];
-                    let sumA = 0;
-                    for (let k = start; k < end; k++) sumA += aspects[k];
-                    const numInRow = end - start;
-                    const availW = W - (numInRow - 1) * s.gap;
-                    const rowH = availW / sumA;
-                    rows.push({ start, end, height: rowH });
-                    totalH += rowH;
-                    if (bi < breaks.length - 1) totalH += s.gap;
-                    start = end;
-                }
-                return { rows, totalH };
-            }
-
-            // Try k = 1..n, pick the best by coverage of canvas after uniform
-            // scale-to-fit.
-            let bestScore = -Infinity;
-            let bestRows = null;
-            let bestScale = 1;
-            for (let k = 1; k <= n; k++) {
-                const breaks = partition(k);
-                const { rows, totalH } = buildRows(breaks);
-                // Each row has length W. To fit inside W x H preserving aspects:
-                const scale = Math.min(1, H / totalH);
-                const coverage = (W * scale * totalH * scale) / (W * H);
-                if (coverage > bestScore) {
-                    bestScore = coverage;
-                    bestRows = rows;
-                    bestScale = scale;
-                }
-            }
-
-            // Compute scaled total stack height in transposed space.
-            const rows = bestRows;
-            let totalH = 0;
-            for (let r = 0; r < rows.length; r++) {
-                totalH += rows[r].height;
-                if (r < rows.length - 1) totalH += s.gap;
-            }
-            const finalW = W * bestScale;
-            const finalH = totalH * bestScale;
-
-            // Build rectangles in transposed (local) coordinates, then map
-            // back to real canvas coordinates.
-            // Local axes: u = along the row (length W), v = stacking axis (height H).
-            const offsetU = (W - finalW) / 2;
-            const offsetV = (H - finalH) / 2;
-
-            const out = new Array(n);
-            let v = offsetV;
-            for (const row of rows) {
-                const rowH = row.height * bestScale;
-                let u = offsetU;
-                for (let k = row.start; k < row.end; k++) {
-                    const wLocal = aspects[k] * rowH;
-                    if (transpose) {
-                        // local (u along H, v along W) -> real (x = innerX + v, y = innerY + u)
-                        // photo width in real space = rowH; height = wLocal
-                        out[k] = {
-                            x: innerX + v,
-                            y: innerY + u,
-                            w: rowH,
-                            h: wLocal,
-                        };
-                    } else {
-                        out[k] = {
-                            x: innerX + u,
-                            y: innerY + v,
-                            w: wLocal,
-                            h: rowH,
-                        };
-                    }
-                    u += wLocal + s.gap * bestScale;
-                }
-                v += rowH + s.gap * bestScale;
-            }
-            return out;
-        }
-
-        // ---------- Mosaic templates ----------
-        // Each template is a structural tree of weighted splits:
-        //   { type:'row', children:[...] }  -> children placed left-to-right, full height,
-        //                                       widths proportional to child weights
-        //   { type:'col', children:[...] }  -> children placed top-to-bottom, full width,
-        //                                       heights proportional to child weights
-        //   { type:'leaf', weight }         -> a photo slot
-        // Weights are relative within a parent (so one child can be twice as wide/tall
-        // as a sibling). Templates intentionally feature a "hero" cell in many cases.
-        // Photos are assigned to leaves by best aspect fit so cropping is minimized,
-        // but the overall composition (sizes, hierarchy) is fixed by the template.
-        // L = landscape-canvas variant, P = portrait-canvas variant.
-        const Lf = (weight) => ({ type: 'leaf', weight: weight ?? 1 });
-        const Row = (weight, ...c) => ({ type: 'row', weight, children: c });
-        const Col = (weight, ...c) => ({ type: 'col', weight, children: c });
-        const MOSAIC_TEMPLATES = {
-            1: { L: Lf(1) },
-            2: {
-                L: Row(1, Lf(1), Lf(1)),
-                P: Col(1, Lf(1), Lf(1)),
-            },
-            // 3: hero on one side, two stacked on the other.
-            3: {
-                L: Row(1, Lf(2), Col(1, Lf(1), Lf(1))),
-                P: Col(1, Lf(2), Row(1, Lf(1), Lf(1))),
-            },
-            // 4: hero + 3 stacked.
-            4: {
-                L: Row(1, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
-                P: Col(1, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
-            },
-            // 5: hero + 4 in a 2x2 grid.
-            5: {
-                L: Row(1, Lf(2), Col(1, Row(1, Lf(1), Lf(1)), Row(1, Lf(1), Lf(1)))),
-                P: Col(1, Lf(2), Col(1, Row(1, Lf(1), Lf(1)), Row(1, Lf(1), Lf(1)))),
-            },
-            // 6: hero + 5 (top: 2 small, bottom: 3 small).
-            6: {
-                L: Row(1,
-                    Col(2, Lf(1), Row(1, Lf(1), Lf(1))),
-                    Col(1, Lf(1), Lf(1), Lf(1)),
-                ),
-                P: Col(1,
-                    Row(2, Lf(1), Col(1, Lf(1), Lf(1))),
-                    Row(1, Lf(1), Lf(1), Lf(1)),
-                ),
-            },
-            // 7: hero + 2 stacked + 4 in a row.
-            7: {
-                L: Col(1,
-                    Row(2, Lf(2), Col(1, Lf(1), Lf(1))),
-                    Row(1, Lf(1), Lf(1), Lf(1), Lf(1)),
-                ),
-                P: Row(1,
-                    Col(2, Lf(2), Row(1, Lf(1), Lf(1))),
-                    Col(1, Lf(1), Lf(1), Lf(1), Lf(1)),
-                ),
-            },
-            // 8: hero + 3 in a column + 4 in a row.
-            8: {
-                L: Col(1,
-                    Row(2, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
-                    Row(1, Lf(1), Lf(1), Lf(1), Lf(1)),
-                ),
-                P: Row(1,
-                    Col(2, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
-                    Col(1, Lf(1), Lf(1), Lf(1), Lf(1)),
-                ),
-            },
-            // 9: hero + 8 around it (top row of 4, right column of 2, bottom row of 2).
-            9: {
-                L: Col(1,
-                    Row(2, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
-                    Row(1, Lf(1), Lf(1), Lf(1), Lf(1), Lf(1)),
-                ),
-                P: Row(1,
-                    Col(2, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
-                    Col(1, Lf(1), Lf(1), Lf(1), Lf(1), Lf(1)),
-                ),
-            },
-        };
-
-        // Collect leaves of a template tree in DFS order (matches reading order).
-        function mosaicLeaves(node, out) {
-            out = out || [];
-            if (node.type === 'leaf') { out.push(node); return out; }
-            for (const c of node.children) mosaicLeaves(c, out);
-            return out;
-        }
-
-        // Place a subtree into rect (x,y,w,h), splitting by child weights.
-        // Writes pixel rects into leaf._rect.
-        function mosaicPlace(node, x, y, w, h, gap) {
-            if (node.type === 'leaf') {
-                node._rect = { x, y, w: Math.max(1, w), h: Math.max(1, h) };
-                return;
-            }
-            const k = node.children.length;
-            const weights = node.children.map(c => c.weight ?? 1);
-            const sum = weights.reduce((a, b) => a + b, 0);
-            const totalGap = gap * (k - 1);
-            if (node.type === 'row') {
-                const innerW = Math.max(1, w - totalGap);
-                let cx = x;
-                for (let i = 0; i < k; i++) {
-                    const cw = innerW * (weights[i] / sum);
-                    mosaicPlace(node.children[i], cx, y, cw, h, gap);
-                    cx += cw + gap;
-                }
-            } else {
-                const innerH = Math.max(1, h - totalGap);
-                let cy = y;
-                for (let i = 0; i < k; i++) {
-                    const ch = innerH * (weights[i] / sum);
-                    mosaicPlace(node.children[i], x, cy, w, ch, gap);
-                    cy += ch + gap;
-                }
-            }
-        }
-
-        // Deep clone a template tree (templates are reused across renders).
-        function mosaicClone(node) {
-            if (node.type === 'leaf') return { type: 'leaf', weight: node.weight };
-            return { type: node.type, weight: node.weight, children: node.children.map(mosaicClone) };
-        }
-
-        function computeRects(s, n) {
-            const innerX = s.padding;
-            const innerY = s.padding;
-            const innerW = s.W - 2 * s.padding;
-            const innerH = s.H - 2 * s.padding;
-            const rects = [];
-
-            if (n === 0) return rects;
-
-            if (s.layout === 'justified-rows') {
-                return computeJustified(s, innerX, innerY, innerW, innerH, false);
-            }
-            if (s.layout === 'justified-cols') {
-                return computeJustified(s, innerX, innerY, innerW, innerH, true);
-            }
-
-            if (s.layout === 'row') {
-                const cellW = (innerW - s.gap * (n - 1)) / n;
-                for (let i = 0; i < n; i++) {
-                    rects.push({ x: innerX + i * (cellW + s.gap), y: innerY, w: cellW, h: innerH });
-                }
-                return rects;
-            }
-
-            if (s.layout === 'column') {
-                const cellH = (innerH - s.gap * (n - 1)) / n;
-                for (let i = 0; i < n; i++) {
-                    rects.push({ x: innerX, y: innerY + i * (cellH + s.gap), w: innerW, h: cellH });
-                }
-                return rects;
-            }
-
-            if (s.layout === 'grid') {
-                // Variable row heights, no crop. Photos are partitioned into
-                // consecutive chunks of `cols` (last row may be shorter).
-                // Each row fills innerW: H_r = (innerW - gap*(len-1)) / sum(aspects).
-                // The whole stack is scaled down (if needed) to fit innerH and
-                // centered vertically.
-                const cols = Math.min(s.columns, n);
-                const aspects = photos.map(p => p.img.naturalWidth / p.img.naturalHeight);
-                const rowDefs = [];
-                let totalH = 0;
-                for (let start = 0; start < n; start += cols) {
-                    const end = Math.min(start + cols, n);
-                    let sumA = 0;
-                    for (let k = start; k < end; k++) sumA += aspects[k];
-                    const availW = innerW - s.gap * (end - start - 1);
-                    const rowH = availW / sumA;
-                    rowDefs.push({ start, end, height: rowH });
-                    totalH += rowH;
-                }
-                totalH += s.gap * (rowDefs.length - 1);
-
-                const scale = Math.min(1, innerH / totalH);
-                const offsetX = innerX + (innerW - innerW * scale) / 2;
-                const offsetY = innerY + (innerH - totalH * scale) / 2;
-
-                let y = offsetY;
-                for (const row of rowDefs) {
-                    const rowH = row.height * scale;
-                    let x = offsetX;
-                    for (let k = row.start; k < row.end; k++) {
-                        const w = aspects[k] * rowH;
-                        rects.push({ x, y, w, h: rowH });
-                        x += w + s.gap * scale;
-                    }
-                    y += rowH + s.gap * scale;
-                }
-                return rects;
-            }
-
-            if (s.layout === 'columns') {
-                // Masonry: place each photo into the currently-shortest column,
-                // then scale all columns vertically to fit innerH.
-                const cols = Math.min(s.columns, n);
-                const cellW = (innerW - s.gap * (cols - 1)) / cols;
-                const colItems = Array.from({ length: cols }, () => []);
-                const colHeights = new Array(cols).fill(0);
-
-                photos.forEach((p, i) => {
-                    const ar = p.img.naturalWidth / p.img.naturalHeight;
-                    const h = cellW / ar;
-                    let target = 0;
-                    for (let c = 1; c < cols; c++) {
-                        if (colHeights[c] < colHeights[target]) target = c;
-                    }
-                    colItems[target].push({ index: i, h });
-                    colHeights[target] += h + s.gap;
-                });
-
-                // Trim trailing gap from each col height
-                for (let c = 0; c < cols; c++) {
-                    if (colItems[c].length > 0) colHeights[c] -= s.gap;
-                }
-                const tallest = Math.max(...colHeights, 1);
-                const scale = innerH / tallest;
-
-                // We want a stable order in `rects` matching photo index
-                const out = new Array(n);
-                for (let c = 0; c < cols; c++) {
-                    const colH = colHeights[c] * scale;
-                    let y = innerY + (innerH - colH) / 2;
-                    for (const item of colItems[c]) {
-                        const h = item.h * scale;
-                        out[item.index] = {
-                            x: innerX + c * (cellW + s.gap),
-                            y,
-                            w: cellW,
-                            h,
-                        };
-                        y += h + s.gap;
-                    }
-                }
-                return out;
-            }
-
-            if (s.layout === 'hero-grid') {
-                if (n === 1) {
-                    rects.push({ x: innerX, y: innerY, w: innerW, h: innerH });
-                    return rects;
-                }
-                // Split direction: vertical band if landscape canvas, horizontal if portrait.
-                const horizontal = innerW > innerH;
-                const heroFrac = 0.5;
-                const pos = s.heroPos; // 'start' | 'center' | 'end'
-                const heroIdx = 0;
-                const restIndices = [];
-                for (let i = 0; i < n; i++) if (i !== heroIdx) restIndices.push(i);
-
-                // Compute hero rect and grid region(s).
-                let heroRect;
-                const gridRegions = []; // each: { x, y, w, h, indices }
-                if (horizontal) {
-                    const heroW = innerW * heroFrac;
-                    const restW = innerW - heroW - s.gap;
-                    if (pos === 'start') {
-                        heroRect = { x: innerX, y: innerY, w: heroW, h: innerH };
-                        gridRegions.push({ x: innerX + heroW + s.gap, y: innerY, w: restW, h: innerH, indices: restIndices });
-                    } else if (pos === 'end') {
-                        heroRect = { x: innerX + restW + s.gap, y: innerY, w: heroW, h: innerH };
-                        gridRegions.push({ x: innerX, y: innerY, w: restW, h: innerH, indices: restIndices });
-                    } else {
-                        // center: grid on both sides, split evenly
-                        const sideW = (innerW - heroW - 2 * s.gap) / 2;
-                        heroRect = { x: innerX + sideW + s.gap, y: innerY, w: heroW, h: innerH };
-                        const half = Math.ceil(restIndices.length / 2);
-                        gridRegions.push({ x: innerX, y: innerY, w: sideW, h: innerH, indices: restIndices.slice(0, half) });
-                        gridRegions.push({ x: innerX + sideW + s.gap + heroW + s.gap, y: innerY, w: sideW, h: innerH, indices: restIndices.slice(half) });
-                    }
-                } else {
-                    const heroH = innerH * heroFrac;
-                    const restH = innerH - heroH - s.gap;
-                    if (pos === 'start') {
-                        heroRect = { x: innerX, y: innerY, w: innerW, h: heroH };
-                        gridRegions.push({ x: innerX, y: innerY + heroH + s.gap, w: innerW, h: restH, indices: restIndices });
-                    } else if (pos === 'end') {
-                        heroRect = { x: innerX, y: innerY + restH + s.gap, w: innerW, h: heroH };
-                        gridRegions.push({ x: innerX, y: innerY, w: innerW, h: restH, indices: restIndices });
-                    } else {
-                        const sideH = (innerH - heroH - 2 * s.gap) / 2;
-                        heroRect = { x: innerX, y: innerY + sideH + s.gap, w: innerW, h: heroH };
-                        const half = Math.ceil(restIndices.length / 2);
-                        gridRegions.push({ x: innerX, y: innerY, w: innerW, h: sideH, indices: restIndices.slice(0, half) });
-                        gridRegions.push({ x: innerX, y: innerY + sideH + s.gap + heroH + s.gap, w: innerW, h: sideH, indices: restIndices.slice(half) });
-                    }
-                }
-
-                const out = new Array(n);
-                out[heroIdx] = heroRect;
-
-                // For each grid region, lay out using variable-row-height algorithm.
-                for (const region of gridRegions) {
-                    const idxs = region.indices;
-                    if (idxs.length === 0) continue;
-                    const aspects = idxs.map(i => photos[i].img.naturalWidth / photos[i].img.naturalHeight);
-                    const cols = Math.max(1, Math.min(idxs.length, Math.round(Math.sqrt(idxs.length))));
-                    const rowDefs = [];
-                    let totalH = 0;
-                    for (let start = 0; start < idxs.length; start += cols) {
-                        const end = Math.min(start + cols, idxs.length);
-                        let sumA = 0;
-                        for (let k = start; k < end; k++) sumA += aspects[k];
-                        const availW = region.w - s.gap * (end - start - 1);
-                        const rowH = availW / sumA;
-                        rowDefs.push({ start, end, height: rowH });
-                        totalH += rowH;
-                    }
-                    totalH += s.gap * (rowDefs.length - 1);
-                    const scale = Math.min(1, region.h / totalH);
-                    const offX = region.x + (region.w - region.w * scale) / 2;
-                    const offY = region.y + (region.h - totalH * scale) / 2;
-                    let y = offY;
-                    for (const row of rowDefs) {
-                        const rowH = row.height * scale;
-                        let x = offX;
-                        for (let k = row.start; k < row.end; k++) {
-                            const w = aspects[k] * rowH;
-                            out[idxs[k]] = { x, y, w, h: rowH };
-                            x += w + s.gap * scale;
-                        }
-                        y += rowH + s.gap * scale;
-                    }
-                }
-
-                return out;
-            }
-
-            if (s.layout === 'mosaic') {
-                const tplDef = MOSAIC_TEMPLATES[n];
-                if (!tplDef) return rects; // safety: should be hidden when n>9
-                const orient = innerW >= innerH ? 'L' : 'P';
-                const tree = mosaicClone(tplDef[orient] || tplDef.L);
-
-                // Place template by weights -> each leaf gets its target rect.
-                mosaicPlace(tree, innerX, innerY, innerW, innerH, s.gap);
-                const leaves = mosaicLeaves(tree);
-
-                // Greedy assignment: largest cells first pick the photo whose aspect
-                // best matches the cell's aspect (log-distance, scale-invariant).
-                // This minimizes cropping in the most visible cells (e.g. the hero).
-                const cells = leaves
-                    .map((leaf, i) => ({ leaf, area: leaf._rect.w * leaf._rect.h, order: i }))
-                    .sort((a, b) => b.area - a.area);
-
-                const taken = new Set();
-                const out = new Array(n);
-                for (const cell of cells) {
-                    const ca = cell.leaf._rect.w / cell.leaf._rect.h;
-                    const caLog = Math.log(ca);
-                    let bestPhoto = -1;
-                    let bestCost = Infinity;
-                    for (let i = 0; i < n; i++) {
-                        if (taken.has(i)) continue;
-                        const ar = photos[i].img.naturalWidth / photos[i].img.naturalHeight;
-                        const cost = Math.abs(Math.log(ar) - caLog);
-                        if (cost < bestCost - 1e-9) {
-                            bestCost = cost;
-                            bestPhoto = i;
-                        }
-                    }
-                    taken.add(bestPhoto);
-                    out[bestPhoto] = cell.leaf._rect;
-                }
-                return out;
-            }
-
-            if (s.layout === 'polaroid') {
-                // Deterministic pseudo-random for stable layouts across renders.
-                function rand(seed) {
-                    let x = Math.sin(seed * 9301 + 49297) * 233280;
-                    return x - Math.floor(x);
-                }
-                // Target polaroid photo-content width ~= sqrt(canvasArea / n) * 1.2
-                // so a few overlap nicely.
-                const targetW = Math.sqrt((innerW * innerH) / Math.max(n, 1)) * 1.2;
-                const borderSide = targetW * 0.06;
-                const borderBottom = targetW * 0.22;
-                const maxRot = 12 * Math.PI / 180;
-
-                const out = new Array(n);
-                for (let i = 0; i < n; i++) {
-                    const ar = photos[i].img.naturalWidth / photos[i].img.naturalHeight;
-                    const photoW = targetW;
-                    const photoH = targetW / ar;
-                    const frameW = photoW + 2 * borderSide;
-                    const frameH = photoH + borderSide + borderBottom;
-                    // Position the polaroid center somewhere in the canvas;
-                    // allow some overflow so edges look natural.
-                    const margin = Math.min(frameW, frameH) * 0.3;
-                    const cx = innerX + margin + rand(i * 2 + 1) * (innerW - 2 * margin);
-                    const cy = innerY + margin + rand(i * 2 + 2) * (innerH - 2 * margin);
-                    const rotation = (rand(i * 2 + 3) * 2 - 1) * maxRot;
-                    out[i] = {
-                        rotation,
-                        polaroid: { borderSide, borderBottom, cx, cy, frameW, frameH },
-                    };
-                }
-                return out;
-            }
-
-            return rects;
-        }
-
-        function render() {
-            const s = getSettings();
-            canvas.width = s.W;
-            canvas.height = s.H;
-
-            ctx.fillStyle = s.bg;
-            ctx.fillRect(0, 0, s.W, s.H);
-
-            if (photos.length === 0) return;
-
-            const rects = computeRects(s, photos.length);
-            for (let i = 0; i < photos.length; i++) {
-                const r = rects[i];
-                if (!r) continue;
-                if (r.polaroid) {
-                    drawPolaroid(ctx, photos[i].img, r);
-                } else {
-                    drawCover(ctx, photos[i].img, r.x, r.y, r.w, r.h, s.radius);
-                }
-            }
-        }
-
-        function drawPolaroid(c, img, r) {
-            const { borderSide, borderBottom, cx, cy, frameW, frameH } = r.polaroid;
-            c.save();
-            c.translate(cx, cy);
-            c.rotate(r.rotation);
-            // Frame (white with subtle shadow)
-            c.shadowColor = 'rgba(0,0,0,0.25)';
-            c.shadowBlur = Math.max(4, frameW * 0.04);
-            c.shadowOffsetX = 0;
-            c.shadowOffsetY = Math.max(2, frameW * 0.02);
-            c.fillStyle = '#ffffff';
-            c.fillRect(-frameW / 2, -frameH / 2, frameW, frameH);
-            // Photo content (cover-fit inside the photo rect, no shadow)
-            c.shadowColor = 'transparent';
-            c.shadowBlur = 0;
-            c.shadowOffsetX = 0;
-            c.shadowOffsetY = 0;
-            const photoW = frameW - 2 * borderSide;
-            const photoH = frameH - borderSide - borderBottom;
-            const photoX = -frameW / 2 + borderSide;
-            const photoY = -frameH / 2 + borderSide;
-            drawCover(c, img, photoX, photoY, photoW, photoH, 0);
-            c.restore();
-        }
-
-        // ---------- Wire up ----------
-        uploadArea.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            addFiles(e.target.files);
-            fileInput.value = '';
-        });
-
-        ['dragenter', 'dragover'].forEach(ev => {
-            uploadArea.addEventListener(ev, (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-        });
-        ['dragleave', 'drop'].forEach(ev => {
-            uploadArea.addEventListener(ev, (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-            });
-        });
-        uploadArea.addEventListener('drop', (e) => {
-            if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
-        });
-
-        // Range value displays
-        ['gap', 'padding', 'radius'].forEach(k => {
-            controls[k].addEventListener('input', () => {
-                $(k + 'Val').textContent = controls[k].value;
-                render();
-            });
-        });
-        ['outWidth', 'outHeight', 'layout', 'columns', 'bgColor'].forEach(k => {
-            controls[k].addEventListener('input', render);
-            controls[k].addEventListener('change', render);
-        });
-        controls.heroPos.addEventListener('change', render);
-
-        // Show layout-specific fields only when relevant.
-        const columnsField = $('columnsField');
-        const heroPosField = $('heroPosField');
-        const LAYOUTS_WITH_COLUMNS = new Set(['grid', 'columns']);
-        function updateLayoutFieldsVisibility() {
-            const layout = controls.layout.value;
-            columnsField.hidden = !LAYOUTS_WITH_COLUMNS.has(layout);
-            heroPosField.hidden = layout !== 'hero-grid';
-        }
-        controls.layout.addEventListener('change', updateLayoutFieldsVisibility);
-
-        // Ratio preset buttons
-        document.querySelectorAll('.preset-btns button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                controls.outWidth.value = btn.dataset.w;
-                controls.outHeight.value = btn.dataset.h;
-                render();
-            });
-        });
-
-        downloadBtn.addEventListener('click', () => {
-            canvas.toBlob((blob) => {
-                if (!blob) return;
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `collage-${Date.now()}.png`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-            }, 'image/png');
-        });
-
-        clearBtn.addEventListener('click', () => {
-            photos.forEach(p => URL.revokeObjectURL(p.url));
-            photos.length = 0;
+          el.querySelector(".remove").addEventListener("click", (e) => {
+            e.stopPropagation();
+            URL.revokeObjectURL(p.url);
+            photos.splice(i, 1);
             renderThumbs();
             render();
             updateButtons();
-        });
+          });
 
-        // Initial state
-        updateButtons();
-        updateLayoutFieldsVisibility();
+          el.addEventListener("dragstart", (e) => {
+            el.classList.add("dragging");
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", String(i));
+          });
+          el.addEventListener("dragend", () => el.classList.remove("dragging"));
+          el.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            el.classList.add("drag-over");
+          });
+          el.addEventListener("dragleave", () =>
+            el.classList.remove("drag-over"),
+          );
+          el.addEventListener("drop", (e) => {
+            e.preventDefault();
+            el.classList.remove("drag-over");
+            const from = +e.dataTransfer.getData("text/plain");
+            const to = +el.dataset.index;
+            if (isNaN(from) || from === to) return;
+            const [moved] = photos.splice(from, 1);
+            photos.splice(to, 0, moved);
+            renderThumbs();
+            render();
+          });
+
+          thumbsEl.appendChild(el);
+        });
+      }
+
+      function updateButtons() {
+        const has = photos.length > 0;
+        downloadBtn.disabled = !has;
+        clearBtn.disabled = !has;
+        previewPlaceholder.style.display = has ? "none" : "block";
+        canvas.style.display = has ? "block" : "none";
+        updateLayoutOptionsAvailability();
+      }
+
+      // Hide layout options that don't apply to the current photo count.
+      function updateLayoutOptionsAvailability() {
+        const n = photos.length;
+        const mosaicOpt = controls.layout.querySelector(
+          'option[value="mosaic"]',
+        );
+        const mosaicAvailable = n >= 1 && n <= 9;
+        mosaicOpt.hidden = !mosaicAvailable;
+        mosaicOpt.disabled = !mosaicAvailable;
+        if (!mosaicAvailable && controls.layout.value === "mosaic") {
+          controls.layout.value = "justified-rows";
+          updateLayoutFieldsVisibility();
+        }
+      }
+
+      // ---------- Layout / drawing ----------
+      function getSettings() {
+        return {
+          W: Math.max(100, +controls.outWidth.value || 800),
+          H: Math.max(100, +controls.outHeight.value || 1200),
+          layout: controls.layout.value,
+          columns: Math.max(1, +controls.columns.value || 1),
+          gap: +controls.gap.value,
+          padding: 0,
+          radius: +controls.radius.value,
+          bg: controls.bgColor.value,
+          heroPos: controls.heroPos.value,
+        };
+      }
+
+      function roundedRectPath(c, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        c.beginPath();
+        c.moveTo(x + r, y);
+        c.lineTo(x + w - r, y);
+        c.quadraticCurveTo(x + w, y, x + w, y + r);
+        c.lineTo(x + w, y + h - r);
+        c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        c.lineTo(x + r, y + h);
+        c.quadraticCurveTo(x, y + h, x, y + h - r);
+        c.lineTo(x, y + r);
+        c.quadraticCurveTo(x, y, x + r, y);
+        c.closePath();
+      }
+
+      // Draw image to fill rect (object-fit: cover)
+      function drawCover(c, img, x, y, w, h, r) {
+        if (w <= 0 || h <= 0) return;
+        c.save();
+        if (r > 0) {
+          roundedRectPath(c, x, y, w, h, r);
+          c.clip();
+        } else {
+          c.beginPath();
+          c.rect(x, y, w, h);
+          c.clip();
+        }
+        const ir = img.naturalWidth / img.naturalHeight;
+        const tr = w / h;
+        let sx, sy, sw, sh;
+        if (ir > tr) {
+          sh = img.naturalHeight;
+          sw = sh * tr;
+          sx = (img.naturalWidth - sw) / 2;
+          sy = 0;
+        } else {
+          sw = img.naturalWidth;
+          sh = sw / tr;
+          sx = 0;
+          sy = (img.naturalHeight - sh) / 2;
+        }
+        c.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+        c.restore();
+      }
+
+      // Justified layout. Every photo is shown in full (no crop).
+      //
+      // Two directions:
+      //   transpose=false (rows):    photos packed into rows that fill the
+      //                              canvas WIDTH; rows stack vertically and
+      //                              each row has its own height.
+      //   transpose=true  (columns): photos packed into columns that fill the
+      //                              canvas HEIGHT; columns stack horizontally
+      //                              and each column has its own width.
+      //
+      // The two modes are mathematical transposes of each other. We implement
+      // the row mode and reuse it for columns by transposing the canvas
+      // dimensions and aspect ratios on input, then transposing the output
+      // rectangles before returning.
+      //
+      // For arbitrary mixed aspect ratios + a fixed canvas it's mathematically
+      // impossible to always fill the canvas exactly with no cropping. So we:
+      //   1. Try every possible number of rows (1..N) and find the optimal
+      //      consecutive-partition for each via linear-partition DP that
+      //      balances row aspect sums (so rows have similar heights).
+      //   2. For each candidate, scale the stack uniformly to fit inside
+      //      innerW x innerH while preserving aspect ratios (no crop).
+      //   3. Pick the row count whose scaled stack covers the largest
+      //      fraction of the canvas (smallest leftover gap area).
+      //   4. Center the stack on the canvas; the background color fills any
+      //      leftover strip on the side or bottom.
+      function computeJustified(s, innerX, innerY, innerW, innerH, transpose) {
+        // For column mode, transpose the problem: swap canvas dimensions
+        // and use 1/aspect (since each photo's role of width <-> height swaps).
+        const W = transpose ? innerH : innerW;
+        const H = transpose ? innerW : innerH;
+        const aspects = photos.map((p) => {
+          const a = p.img.naturalWidth / p.img.naturalHeight;
+          return transpose ? 1 / a : a;
+        });
+        const n = aspects.length;
+        if (n === 0) return [];
+
+        // Build optimal row partitions via linear partition DP.
+        // We minimize the maximum row aspect-sum (classic linear partition)
+        // which yields rows with similar heights when each fills the width.
+        function partition(k) {
+          if (k >= n) k = n;
+          if (k <= 1) return [n];
+          // dp[i][j] = best (min of max row aspect sum) for first i photos
+          // split into j rows. parent[i][j] = best previous boundary.
+          const prefix = new Array(n + 1).fill(0);
+          for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + aspects[i];
+          const dp = Array.from({ length: n + 1 }, () =>
+            new Array(k + 1).fill(Infinity),
+          );
+          const parent = Array.from({ length: n + 1 }, () =>
+            new Array(k + 1).fill(0),
+          );
+          dp[0][0] = 0;
+          for (let i = 1; i <= n; i++) {
+            dp[i][1] = prefix[i];
+            parent[i][1] = 0;
+          }
+          for (let j = 2; j <= k; j++) {
+            for (let i = j; i <= n; i++) {
+              for (let p = j - 1; p < i; p++) {
+                const cost = Math.max(dp[p][j - 1], prefix[i] - prefix[p]);
+                if (cost < dp[i][j]) {
+                  dp[i][j] = cost;
+                  parent[i][j] = p;
+                }
+              }
+            }
+          }
+          const breaks = [];
+          let i = n,
+            j = k;
+          while (j > 0) {
+            breaks.push(i);
+            i = parent[i][j];
+            j--;
+          }
+          breaks.reverse();
+          // breaks = [end1, end2, ..., n]
+          return breaks;
+        }
+
+        // For a given list of row-end indices, compute the layout assuming
+        // each row exactly fills W (transposed-aware).
+        function buildRows(breaks) {
+          const rows = [];
+          let start = 0;
+          let totalH = 0;
+          for (let bi = 0; bi < breaks.length; bi++) {
+            const end = breaks[bi];
+            let sumA = 0;
+            for (let k = start; k < end; k++) sumA += aspects[k];
+            const numInRow = end - start;
+            const availW = W - (numInRow - 1) * s.gap;
+            const rowH = availW / sumA;
+            rows.push({ start, end, height: rowH });
+            totalH += rowH;
+            if (bi < breaks.length - 1) totalH += s.gap;
+            start = end;
+          }
+          return { rows, totalH };
+        }
+
+        // Try k = 1..n, pick the best by coverage of canvas after uniform
+        // scale-to-fit.
+        let bestScore = -Infinity;
+        let bestRows = null;
+        let bestScale = 1;
+        for (let k = 1; k <= n; k++) {
+          const breaks = partition(k);
+          const { rows, totalH } = buildRows(breaks);
+          // Each row has length W. To fit inside W x H preserving aspects:
+          const scale = Math.min(1, H / totalH);
+          const coverage = (W * scale * totalH * scale) / (W * H);
+          if (coverage > bestScore) {
+            bestScore = coverage;
+            bestRows = rows;
+            bestScale = scale;
+          }
+        }
+
+        // Compute scaled total stack height in transposed space.
+        const rows = bestRows;
+        let totalH = 0;
+        for (let r = 0; r < rows.length; r++) {
+          totalH += rows[r].height;
+          if (r < rows.length - 1) totalH += s.gap;
+        }
+        const finalW = W * bestScale;
+        const finalH = totalH * bestScale;
+
+        // Build rectangles in transposed (local) coordinates, then map
+        // back to real canvas coordinates.
+        // Local axes: u = along the row (length W), v = stacking axis (height H).
+        const offsetU = (W - finalW) / 2;
+        const offsetV = (H - finalH) / 2;
+
+        const out = new Array(n);
+        let v = offsetV;
+        for (const row of rows) {
+          const rowH = row.height * bestScale;
+          let u = offsetU;
+          for (let k = row.start; k < row.end; k++) {
+            const wLocal = aspects[k] * rowH;
+            if (transpose) {
+              // local (u along H, v along W) -> real (x = innerX + v, y = innerY + u)
+              // photo width in real space = rowH; height = wLocal
+              out[k] = {
+                x: innerX + v,
+                y: innerY + u,
+                w: rowH,
+                h: wLocal,
+              };
+            } else {
+              out[k] = {
+                x: innerX + u,
+                y: innerY + v,
+                w: wLocal,
+                h: rowH,
+              };
+            }
+            u += wLocal + s.gap * bestScale;
+          }
+          v += rowH + s.gap * bestScale;
+        }
+        return out;
+      }
+
+      // ---------- Mosaic templates ----------
+      // Each template is a structural tree of weighted splits:
+      //   { type:'row', children:[...] }  -> children placed left-to-right, full height,
+      //                                       widths proportional to child weights
+      //   { type:'col', children:[...] }  -> children placed top-to-bottom, full width,
+      //                                       heights proportional to child weights
+      //   { type:'leaf', weight }         -> a photo slot
+      // Weights are relative within a parent (so one child can be twice as wide/tall
+      // as a sibling). Templates intentionally feature a "hero" cell in many cases.
+      // Photos are assigned to leaves by best aspect fit so cropping is minimized,
+      // but the overall composition (sizes, hierarchy) is fixed by the template.
+      // L = landscape-canvas variant, P = portrait-canvas variant.
+      const Lf = (weight) => ({ type: "leaf", weight: weight ?? 1 });
+      const Row = (weight, ...c) => ({ type: "row", weight, children: c });
+      const Col = (weight, ...c) => ({ type: "col", weight, children: c });
+      const MOSAIC_TEMPLATES = {
+        1: { L: Lf(1) },
+        2: {
+          L: Row(1, Lf(1), Lf(1)),
+          P: Col(1, Lf(1), Lf(1)),
+        },
+        // 3: hero on one side, two stacked on the other.
+        3: {
+          L: Row(1, Lf(2), Col(1, Lf(1), Lf(1))),
+          P: Col(1, Lf(2), Row(1, Lf(1), Lf(1))),
+        },
+        // 4: hero + 3 stacked.
+        4: {
+          L: Row(1, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
+          P: Col(1, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
+        },
+        // 5: hero + 4 in a 2x2 grid.
+        5: {
+          L: Row(1, Lf(2), Col(1, Row(1, Lf(1), Lf(1)), Row(1, Lf(1), Lf(1)))),
+          P: Col(1, Lf(2), Col(1, Row(1, Lf(1), Lf(1)), Row(1, Lf(1), Lf(1)))),
+        },
+        // 6: hero + 5 (top: 2 small, bottom: 3 small).
+        6: {
+          L: Row(
+            1,
+            Col(2, Lf(1), Row(1, Lf(1), Lf(1))),
+            Col(1, Lf(1), Lf(1), Lf(1)),
+          ),
+          P: Col(
+            1,
+            Row(2, Lf(1), Col(1, Lf(1), Lf(1))),
+            Row(1, Lf(1), Lf(1), Lf(1)),
+          ),
+        },
+        // 7: hero + 2 stacked + 4 in a row.
+        7: {
+          L: Col(
+            1,
+            Row(2, Lf(2), Col(1, Lf(1), Lf(1))),
+            Row(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+          ),
+          P: Row(
+            1,
+            Col(2, Lf(2), Row(1, Lf(1), Lf(1))),
+            Col(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+          ),
+        },
+        // 8: hero + 3 in a column + 4 in a row.
+        8: {
+          L: Col(
+            1,
+            Row(2, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
+            Row(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+          ),
+          P: Row(
+            1,
+            Col(2, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
+            Col(1, Lf(1), Lf(1), Lf(1), Lf(1)),
+          ),
+        },
+        // 9: hero + 8 around it (top row of 4, right column of 2, bottom row of 2).
+        9: {
+          L: Col(
+            1,
+            Row(2, Lf(2), Col(1, Lf(1), Lf(1), Lf(1))),
+            Row(1, Lf(1), Lf(1), Lf(1), Lf(1), Lf(1)),
+          ),
+          P: Row(
+            1,
+            Col(2, Lf(2), Row(1, Lf(1), Lf(1), Lf(1))),
+            Col(1, Lf(1), Lf(1), Lf(1), Lf(1), Lf(1)),
+          ),
+        },
+      };
+
+      // Collect leaves of a template tree in DFS order (matches reading order).
+      function mosaicLeaves(node, out) {
+        out = out || [];
+        if (node.type === "leaf") {
+          out.push(node);
+          return out;
+        }
+        for (const c of node.children) mosaicLeaves(c, out);
+        return out;
+      }
+
+      // Place a subtree into rect (x,y,w,h), splitting by child weights.
+      // Writes pixel rects into leaf._rect.
+      function mosaicPlace(node, x, y, w, h, gap) {
+        if (node.type === "leaf") {
+          node._rect = { x, y, w: Math.max(1, w), h: Math.max(1, h) };
+          return;
+        }
+        const k = node.children.length;
+        const weights = node.children.map((c) => c.weight ?? 1);
+        const sum = weights.reduce((a, b) => a + b, 0);
+        const totalGap = gap * (k - 1);
+        if (node.type === "row") {
+          const innerW = Math.max(1, w - totalGap);
+          let cx = x;
+          for (let i = 0; i < k; i++) {
+            const cw = innerW * (weights[i] / sum);
+            mosaicPlace(node.children[i], cx, y, cw, h, gap);
+            cx += cw + gap;
+          }
+        } else {
+          const innerH = Math.max(1, h - totalGap);
+          let cy = y;
+          for (let i = 0; i < k; i++) {
+            const ch = innerH * (weights[i] / sum);
+            mosaicPlace(node.children[i], x, cy, w, ch, gap);
+            cy += ch + gap;
+          }
+        }
+      }
+
+      // Deep clone a template tree (templates are reused across renders).
+      function mosaicClone(node) {
+        if (node.type === "leaf") return { type: "leaf", weight: node.weight };
+        return {
+          type: node.type,
+          weight: node.weight,
+          children: node.children.map(mosaicClone),
+        };
+      }
+
+      function computeRects(s, n) {
+        const innerX = s.padding;
+        const innerY = s.padding;
+        const innerW = s.W - 2 * s.padding;
+        const innerH = s.H - 2 * s.padding;
+        const rects = [];
+
+        if (n === 0) return rects;
+
+        if (s.layout === "justified-rows") {
+          return computeJustified(s, innerX, innerY, innerW, innerH, false);
+        }
+        if (s.layout === "justified-cols") {
+          return computeJustified(s, innerX, innerY, innerW, innerH, true);
+        }
+
+        if (s.layout === "row") {
+          const cellW = (innerW - s.gap * (n - 1)) / n;
+          for (let i = 0; i < n; i++) {
+            rects.push({
+              x: innerX + i * (cellW + s.gap),
+              y: innerY,
+              w: cellW,
+              h: innerH,
+            });
+          }
+          return rects;
+        }
+
+        if (s.layout === "column") {
+          const cellH = (innerH - s.gap * (n - 1)) / n;
+          for (let i = 0; i < n; i++) {
+            rects.push({
+              x: innerX,
+              y: innerY + i * (cellH + s.gap),
+              w: innerW,
+              h: cellH,
+            });
+          }
+          return rects;
+        }
+
+        if (s.layout === "grid") {
+          // Variable row heights, no crop. Photos are partitioned into
+          // consecutive chunks of `cols` (last row may be shorter).
+          // Each row fills innerW: H_r = (innerW - gap*(len-1)) / sum(aspects).
+          // The whole stack is scaled down (if needed) to fit innerH and
+          // centered vertically.
+          const cols = Math.min(s.columns, n);
+          const aspects = photos.map(
+            (p) => p.img.naturalWidth / p.img.naturalHeight,
+          );
+          const rowDefs = [];
+          let totalH = 0;
+          for (let start = 0; start < n; start += cols) {
+            const end = Math.min(start + cols, n);
+            let sumA = 0;
+            for (let k = start; k < end; k++) sumA += aspects[k];
+            const availW = innerW - s.gap * (end - start - 1);
+            const rowH = availW / sumA;
+            rowDefs.push({ start, end, height: rowH });
+            totalH += rowH;
+          }
+          totalH += s.gap * (rowDefs.length - 1);
+
+          const scale = Math.min(1, innerH / totalH);
+          const offsetX = innerX + (innerW - innerW * scale) / 2;
+          const offsetY = innerY + (innerH - totalH * scale) / 2;
+
+          let y = offsetY;
+          for (const row of rowDefs) {
+            const rowH = row.height * scale;
+            let x = offsetX;
+            for (let k = row.start; k < row.end; k++) {
+              const w = aspects[k] * rowH;
+              rects.push({ x, y, w, h: rowH });
+              x += w + s.gap * scale;
+            }
+            y += rowH + s.gap * scale;
+          }
+          return rects;
+        }
+
+        if (s.layout === "columns") {
+          // Masonry: place each photo into the currently-shortest column,
+          // then scale all columns vertically to fit innerH.
+          const cols = Math.min(s.columns, n);
+          const cellW = (innerW - s.gap * (cols - 1)) / cols;
+          const colItems = Array.from({ length: cols }, () => []);
+          const colHeights = new Array(cols).fill(0);
+
+          photos.forEach((p, i) => {
+            const ar = p.img.naturalWidth / p.img.naturalHeight;
+            const h = cellW / ar;
+            let target = 0;
+            for (let c = 1; c < cols; c++) {
+              if (colHeights[c] < colHeights[target]) target = c;
+            }
+            colItems[target].push({ index: i, h });
+            colHeights[target] += h + s.gap;
+          });
+
+          // Trim trailing gap from each col height
+          for (let c = 0; c < cols; c++) {
+            if (colItems[c].length > 0) colHeights[c] -= s.gap;
+          }
+          const tallest = Math.max(...colHeights, 1);
+          const scale = innerH / tallest;
+
+          // We want a stable order in `rects` matching photo index
+          const out = new Array(n);
+          for (let c = 0; c < cols; c++) {
+            const colH = colHeights[c] * scale;
+            let y = innerY + (innerH - colH) / 2;
+            for (const item of colItems[c]) {
+              const h = item.h * scale;
+              out[item.index] = {
+                x: innerX + c * (cellW + s.gap),
+                y,
+                w: cellW,
+                h,
+              };
+              y += h + s.gap;
+            }
+          }
+          return out;
+        }
+
+        if (s.layout === "hero-grid") {
+          if (n === 1) {
+            rects.push({ x: innerX, y: innerY, w: innerW, h: innerH });
+            return rects;
+          }
+          // Split direction: vertical band if landscape canvas, horizontal if portrait.
+          const horizontal = innerW > innerH;
+          const heroFrac = 0.5;
+          const pos = s.heroPos; // 'start' | 'center' | 'end'
+          const heroIdx = 0;
+          const restIndices = [];
+          for (let i = 0; i < n; i++) if (i !== heroIdx) restIndices.push(i);
+
+          // Compute hero rect and grid region(s).
+          let heroRect;
+          const gridRegions = []; // each: { x, y, w, h, indices }
+          if (horizontal) {
+            const heroW = innerW * heroFrac;
+            const restW = innerW - heroW - s.gap;
+            if (pos === "start") {
+              heroRect = { x: innerX, y: innerY, w: heroW, h: innerH };
+              gridRegions.push({
+                x: innerX + heroW + s.gap,
+                y: innerY,
+                w: restW,
+                h: innerH,
+                indices: restIndices,
+              });
+            } else if (pos === "end") {
+              heroRect = {
+                x: innerX + restW + s.gap,
+                y: innerY,
+                w: heroW,
+                h: innerH,
+              };
+              gridRegions.push({
+                x: innerX,
+                y: innerY,
+                w: restW,
+                h: innerH,
+                indices: restIndices,
+              });
+            } else {
+              // center: grid on both sides, split evenly
+              const sideW = (innerW - heroW - 2 * s.gap) / 2;
+              heroRect = {
+                x: innerX + sideW + s.gap,
+                y: innerY,
+                w: heroW,
+                h: innerH,
+              };
+              const half = Math.ceil(restIndices.length / 2);
+              gridRegions.push({
+                x: innerX,
+                y: innerY,
+                w: sideW,
+                h: innerH,
+                indices: restIndices.slice(0, half),
+              });
+              gridRegions.push({
+                x: innerX + sideW + s.gap + heroW + s.gap,
+                y: innerY,
+                w: sideW,
+                h: innerH,
+                indices: restIndices.slice(half),
+              });
+            }
+          } else {
+            const heroH = innerH * heroFrac;
+            const restH = innerH - heroH - s.gap;
+            if (pos === "start") {
+              heroRect = { x: innerX, y: innerY, w: innerW, h: heroH };
+              gridRegions.push({
+                x: innerX,
+                y: innerY + heroH + s.gap,
+                w: innerW,
+                h: restH,
+                indices: restIndices,
+              });
+            } else if (pos === "end") {
+              heroRect = {
+                x: innerX,
+                y: innerY + restH + s.gap,
+                w: innerW,
+                h: heroH,
+              };
+              gridRegions.push({
+                x: innerX,
+                y: innerY,
+                w: innerW,
+                h: restH,
+                indices: restIndices,
+              });
+            } else {
+              const sideH = (innerH - heroH - 2 * s.gap) / 2;
+              heroRect = {
+                x: innerX,
+                y: innerY + sideH + s.gap,
+                w: innerW,
+                h: heroH,
+              };
+              const half = Math.ceil(restIndices.length / 2);
+              gridRegions.push({
+                x: innerX,
+                y: innerY,
+                w: innerW,
+                h: sideH,
+                indices: restIndices.slice(0, half),
+              });
+              gridRegions.push({
+                x: innerX,
+                y: innerY + sideH + s.gap + heroH + s.gap,
+                w: innerW,
+                h: sideH,
+                indices: restIndices.slice(half),
+              });
+            }
+          }
+
+          const out = new Array(n);
+          out[heroIdx] = heroRect;
+
+          // For each grid region, lay out using variable-row-height algorithm.
+          for (const region of gridRegions) {
+            const idxs = region.indices;
+            if (idxs.length === 0) continue;
+            const aspects = idxs.map(
+              (i) => photos[i].img.naturalWidth / photos[i].img.naturalHeight,
+            );
+            const cols = Math.max(
+              1,
+              Math.min(idxs.length, Math.round(Math.sqrt(idxs.length))),
+            );
+            const rowDefs = [];
+            let totalH = 0;
+            for (let start = 0; start < idxs.length; start += cols) {
+              const end = Math.min(start + cols, idxs.length);
+              let sumA = 0;
+              for (let k = start; k < end; k++) sumA += aspects[k];
+              const availW = region.w - s.gap * (end - start - 1);
+              const rowH = availW / sumA;
+              rowDefs.push({ start, end, height: rowH });
+              totalH += rowH;
+            }
+            totalH += s.gap * (rowDefs.length - 1);
+            const scale = Math.min(1, region.h / totalH);
+            const offX = region.x + (region.w - region.w * scale) / 2;
+            const offY = region.y + (region.h - totalH * scale) / 2;
+            let y = offY;
+            for (const row of rowDefs) {
+              const rowH = row.height * scale;
+              let x = offX;
+              for (let k = row.start; k < row.end; k++) {
+                const w = aspects[k] * rowH;
+                out[idxs[k]] = { x, y, w, h: rowH };
+                x += w + s.gap * scale;
+              }
+              y += rowH + s.gap * scale;
+            }
+          }
+
+          return out;
+        }
+
+        if (s.layout === "mosaic") {
+          const tplDef = MOSAIC_TEMPLATES[n];
+          if (!tplDef) return rects; // safety: should be hidden when n>9
+          const orient = innerW >= innerH ? "L" : "P";
+          const tree = mosaicClone(tplDef[orient] || tplDef.L);
+
+          // Place template by weights -> each leaf gets its target rect.
+          mosaicPlace(tree, innerX, innerY, innerW, innerH, s.gap);
+          const leaves = mosaicLeaves(tree);
+
+          // Greedy assignment: largest cells first pick the photo whose aspect
+          // best matches the cell's aspect (log-distance, scale-invariant).
+          // This minimizes cropping in the most visible cells (e.g. the hero).
+          const cells = leaves
+            .map((leaf, i) => ({
+              leaf,
+              area: leaf._rect.w * leaf._rect.h,
+              order: i,
+            }))
+            .sort((a, b) => b.area - a.area);
+
+          const taken = new Set();
+          const out = new Array(n);
+          for (const cell of cells) {
+            const ca = cell.leaf._rect.w / cell.leaf._rect.h;
+            const caLog = Math.log(ca);
+            let bestPhoto = -1;
+            let bestCost = Infinity;
+            for (let i = 0; i < n; i++) {
+              if (taken.has(i)) continue;
+              const ar =
+                photos[i].img.naturalWidth / photos[i].img.naturalHeight;
+              const cost = Math.abs(Math.log(ar) - caLog);
+              if (cost < bestCost - 1e-9) {
+                bestCost = cost;
+                bestPhoto = i;
+              }
+            }
+            taken.add(bestPhoto);
+            out[bestPhoto] = cell.leaf._rect;
+          }
+          return out;
+        }
+
+        if (s.layout === "polaroid") {
+          // Deterministic pseudo-random for stable layouts across renders.
+          function rand(seed) {
+            let x = Math.sin(seed * 9301 + 49297) * 233280;
+            return x - Math.floor(x);
+          }
+          // Target polaroid photo-content width ~= sqrt(canvasArea / n) * 1.2
+          // so a few overlap nicely.
+          const targetW = Math.sqrt((innerW * innerH) / Math.max(n, 1)) * 1.2;
+          const borderSide = targetW * 0.06;
+          const borderBottom = targetW * 0.22;
+          const maxRot = (12 * Math.PI) / 180;
+
+          const out = new Array(n);
+          for (let i = 0; i < n; i++) {
+            const ar = photos[i].img.naturalWidth / photos[i].img.naturalHeight;
+            const photoW = targetW;
+            const photoH = targetW / ar;
+            const frameW = photoW + 2 * borderSide;
+            const frameH = photoH + borderSide + borderBottom;
+            // Position the polaroid center somewhere in the canvas;
+            // allow some overflow so edges look natural.
+            const margin = Math.min(frameW, frameH) * 0.3;
+            const cx =
+              innerX + margin + rand(i * 2 + 1) * (innerW - 2 * margin);
+            const cy =
+              innerY + margin + rand(i * 2 + 2) * (innerH - 2 * margin);
+            const rotation = (rand(i * 2 + 3) * 2 - 1) * maxRot;
+            out[i] = {
+              rotation,
+              polaroid: { borderSide, borderBottom, cx, cy, frameW, frameH },
+            };
+          }
+          return out;
+        }
+
+        return rects;
+      }
+
+      function render() {
+        const s = getSettings();
+        canvas.width = s.W;
+        canvas.height = s.H;
+        previewWrap.style.aspectRatio = `${s.W} / ${s.H}`;
+
+        ctx.fillStyle = s.bg;
+        ctx.fillRect(0, 0, s.W, s.H);
+
+        if (photos.length === 0) return;
+
+        const rects = computeRects(s, photos.length);
+        for (let i = 0; i < photos.length; i++) {
+          const r = rects[i];
+          if (!r) continue;
+          if (r.polaroid) {
+            drawPolaroid(ctx, photos[i].img, r);
+          } else {
+            drawCover(ctx, photos[i].img, r.x, r.y, r.w, r.h, s.radius);
+          }
+        }
+      }
+
+      function drawPolaroid(c, img, r) {
+        const { borderSide, borderBottom, cx, cy, frameW, frameH } = r.polaroid;
+        c.save();
+        c.translate(cx, cy);
+        c.rotate(r.rotation);
+        // Frame (white with subtle shadow)
+        c.shadowColor = "rgba(0,0,0,0.25)";
+        c.shadowBlur = Math.max(4, frameW * 0.04);
+        c.shadowOffsetX = 0;
+        c.shadowOffsetY = Math.max(2, frameW * 0.02);
+        c.fillStyle = "#ffffff";
+        c.fillRect(-frameW / 2, -frameH / 2, frameW, frameH);
+        // Photo content (cover-fit inside the photo rect, no shadow)
+        c.shadowColor = "transparent";
+        c.shadowBlur = 0;
+        c.shadowOffsetX = 0;
+        c.shadowOffsetY = 0;
+        const photoW = frameW - 2 * borderSide;
+        const photoH = frameH - borderSide - borderBottom;
+        const photoX = -frameW / 2 + borderSide;
+        const photoY = -frameH / 2 + borderSide;
+        drawCover(c, img, photoX, photoY, photoW, photoH, 0);
+        c.restore();
+      }
+
+      // ---------- Wire up ----------
+      // Note: #uploadArea is a <label for="fileInput">, so the browser opens
+      // the file picker natively on click. No extra click handler needed.
+      fileInput.addEventListener("change", (e) => {
+        addFiles(e.target.files);
+        fileInput.value = "";
+      });
+
+      ["dragenter", "dragover"].forEach((ev) => {
+        uploadArea.addEventListener(ev, (e) => {
+          e.preventDefault();
+          uploadArea.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach((ev) => {
+        uploadArea.addEventListener(ev, (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+        });
+      });
+      uploadArea.addEventListener("drop", (e) => {
+        if (e.dataTransfer && e.dataTransfer.files)
+          addFiles(e.dataTransfer.files);
+      });
+
+      // All inputs commit on blur / Enter / drag-release (change event),
+      // not on every keystroke or drag tick.
+      ["gap", "radius"].forEach((k) => {
+        controls[k].addEventListener("change", () => {
+          $(k + "Val").textContent = controls[k].value;
+          render();
+        });
+      });
+      [
+        "outWidth",
+        "outHeight",
+        "layout",
+        "columns",
+        "bgColor",
+        "heroPos",
+      ].forEach((k) => {
+        controls[k].addEventListener("change", render);
+      });
+
+      // Show layout-specific fields only when relevant.
+      const columnsField = $("columnsField");
+      const heroPosField = $("heroPosField");
+      const LAYOUTS_WITH_COLUMNS = new Set(["grid", "columns"]);
+      function updateLayoutFieldsVisibility() {
+        const layout = controls.layout.value;
+        columnsField.hidden = !LAYOUTS_WITH_COLUMNS.has(layout);
+        heroPosField.hidden = layout !== "hero-grid";
+      }
+      controls.layout.addEventListener("change", updateLayoutFieldsVisibility);
+
+      // Ratio preset buttons
+      document.querySelectorAll(".preset-btns button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          controls.outWidth.value = btn.dataset.w;
+          controls.outHeight.value = btn.dataset.h;
+          render();
+        });
+      });
+
+      downloadBtn.addEventListener("click", () => {
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `collage-${Date.now()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, "image/png");
+      });
+
+      clearBtn.addEventListener("click", () => {
+        photos.forEach((p) => URL.revokeObjectURL(p.url));
+        photos.length = 0;
+        renderThumbs();
         render();
+        updateButtons();
+      });
+
+      // Initial state
+      updateButtons();
+      updateLayoutFieldsVisibility();
+      render();
     </script>
-</body>
+  </body>
 </html>
