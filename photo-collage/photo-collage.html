@@ -14,18 +14,32 @@
         margin: 0;
       }
 
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .page-header,
       main {
         max-width: 1400px;
         margin-inline: auto;
-        padding: 48px 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 40px;
+        padding-inline: 32px;
       }
-
-      header {
+      .page-header {
+        padding-block: 48px 0;
         text-align: center;
       }
+      main {
+        padding-block: 40px 48px;
+      }
+
       h1 {
         font-size: 40px;
         margin: 0;
@@ -51,10 +65,28 @@
       }
 
       .left-col {
+        min-width: 0;
+      }
+      .left-col__toggle {
+        cursor: pointer;
+        font-size: 16px;
+        padding: 8px 0;
+        margin-block-end: 24px;
+      }
+      .left-col:not([open]) .left-col__toggle {
+        margin-block-end: 0;
+      }
+      .left-col__body {
         display: flex;
         flex-direction: column;
         gap: 40px;
-        min-width: 0;
+      }
+
+      .layout:has(.left-col:not([open])) {
+        grid-template-columns: 1fr;
+      }
+      .layout:has(.left-col:not([open])) .col-right {
+        grid-column: 1;
       }
 
       .col-right {
@@ -71,7 +103,7 @@
         flex-wrap: wrap;
       }
 
-      #uploadArea {
+      .upload-area {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -83,12 +115,12 @@
         font-size: 15px;
         text-align: center;
       }
-      #uploadArea > :first-child {
+      .upload-area__icon {
         font-size: 40px;
         line-height: 1;
       }
 
-      #thumbs {
+      .thumbs {
         list-style: none;
         margin: 0;
         padding: 0;
@@ -97,7 +129,7 @@
         gap: 8px;
         width: 100%;
       }
-      #thumbs:empty {
+      .thumbs:empty {
         display: none;
       }
 
@@ -143,6 +175,10 @@
         align-items: center;
         gap: 12px 16px;
         width: 100%;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        min-inline-size: 0;
       }
 
       .field {
@@ -165,21 +201,22 @@
         justify-content: flex-start;
       }
 
-      #previewWrap {
+      .preview-frame {
         width: 100%;
         max-height: 80vh;
         display: grid;
         place-items: center;
         border: 1px solid #ccc;
+        margin: 0;
       }
-      #previewCanvas {
+      .preview-frame canvas {
         display: block;
         max-width: 100%;
         max-height: 100%;
         width: auto;
         height: auto;
       }
-      #previewPlaceholder {
+      .preview-placeholder {
         margin: 0;
         font-size: 16px;
       }
@@ -195,9 +232,15 @@
       }
 
       @media (max-width: 640px) {
+        .page-header,
         main {
-          padding: 24px 16px;
-          gap: 32px;
+          padding-inline: 16px;
+        }
+        .page-header {
+          padding-block-start: 24px;
+        }
+        main {
+          padding-block: 32px 24px;
         }
         h1 {
           font-size: 30px;
@@ -205,150 +248,153 @@
         h2 {
           font-size: 22px;
         }
-        #uploadArea {
+        .upload-area {
           padding: 36px 16px;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <header>
-        <h1>Photo Collage Maker</h1>
-      </header>
+    <header class="page-header">
+      <h1>Photo Collage Maker</h1>
+    </header>
 
-      <div class="layout">
-        <div class="left-col">
-          <section aria-labelledby="upload-heading">
-            <h2 id="upload-heading">Add photos</h2>
-            <label id="uploadArea" for="fileInput">
-              <span aria-hidden="true">+</span>
-              <span><strong>Drop photos here</strong> or click to browse</span>
-              <span>Any number of images. JPEG, PNG, WebP supported.</span>
-            </label>
-            <input
-              type="file"
-              id="fileInput"
-              accept="image/*"
-              multiple
-              hidden
-            />
-            <ul id="thumbs" aria-label="Uploaded photos"></ul>
-            <button id="clearBtn" type="button" disabled>Clear All</button>
-          </section>
-
-          <section aria-labelledby="settings-heading">
-            <h2 id="settings-heading">Configure outcome</h2>
-            <form>
-              <div class="control-row" role="group" aria-label="Canvas size">
-                <label class="field">
-                  <span>Width</span>
-                  <input
-                    type="number"
-                    id="outWidth"
-                    value="800"
-                    min="100"
-                    max="10000"
-                    step="10"
-                  />
-                </label>
-                <label class="field">
-                  <span>Height</span>
-                  <input
-                    type="number"
-                    id="outHeight"
-                    value="1200"
-                    min="100"
-                    max="10000"
-                    step="10"
-                  />
-                </label>
-                <div
-                  class="preset-btns"
-                  role="group"
-                  aria-label="Aspect ratio presets"
-                >
-                  <button type="button" data-w="800" data-h="1200">2:3</button>
-                  <button type="button" data-w="1200" data-h="800">3:2</button>
-                  <button type="button" data-w="1080" data-h="1080">1:1</button>
-                  <button type="button" data-w="1080" data-h="1920">
-                    9:16
-                  </button>
-                  <button type="button" data-w="1920" data-h="1080">
-                    16:9
-                  </button>
-                  <button type="button" data-w="1240" data-h="1748">A4</button>
-                </div>
-              </div>
-
-              <div class="control-row" role="group" aria-label="Layout options">
-                <label class="field">
-                  <span>Layout</span>
-                  <select id="layout">
-                    <option value="justified-rows" selected>Auto rows</option>
-                    <option value="justified-cols">Auto cols</option>
-                    <option value="grid">Grid</option>
-                    <option value="columns">Masonry</option>
-                    <option value="hero-grid">Hero + grid</option>
-                    <option value="mosaic">Mosaic</option>
-                    <option value="polaroid">Polaroid scatter</option>
-                    <option value="row">One row</option>
-                    <option value="column">One column</option>
-                  </select>
-                </label>
-                <label class="field" id="columnsField">
-                  <span>Columns</span>
-                  <input
-                    type="number"
-                    id="columns"
-                    value="2"
-                    min="1"
-                    max="10"
-                    step="1"
-                  />
-                </label>
-                <label class="field" id="heroPosField">
-                  <span>Hero position</span>
-                  <select id="heroPos">
-                    <option value="start">Start</option>
-                    <option value="center" selected>Center</option>
-                    <option value="end">End</option>
-                  </select>
-                </label>
-              </div>
-
-              <div class="control-row" role="group" aria-label="Appearance">
-                <label class="field">
-                  <span>Background</span>
-                  <input type="color" id="bgColor" value="#ffffff" />
-                </label>
-                <label class="field">
-                  <span>Gap</span>
-                  <input type="range" id="gap" min="0" max="60" value="8" />
-                  <output id="gapVal" for="gap">8</output>
-                </label>
-                <label class="field">
-                  <span>Corner radius</span>
-                  <input type="range" id="radius" min="0" max="60" value="0" />
-                  <output id="radiusVal" for="radius">0</output>
-                </label>
-              </div>
-            </form>
-          </section>
-        </div>
-        <section class="col-right" aria-labelledby="preview-heading">
-          <div class="preview-header">
-            <h2 id="preview-heading">See preview</h2>
-            <button id="downloadBtn" type="button" disabled>
-              Download Collage (PNG)
-            </button>
-          </div>
-          <div id="previewWrap">
-            <canvas id="previewCanvas" aria-label="Collage preview"></canvas>
-            <p id="previewPlaceholder" role="status">Live preview</p>
-          </div>
+    <main class="layout">
+      <details class="left-col" open>
+        <summary class="left-col__toggle">Controls</summary>
+        <div class="left-col__body">
+        <section aria-labelledby="upload-heading">
+          <h2 id="upload-heading">Add photos</h2>
+          <label id="uploadArea" class="upload-area" for="fileInput">
+            <span class="upload-area__icon" aria-hidden="true">+</span>
+            <span><strong>Drop photos here</strong> or click to browse</span>
+            <span>Any number of images. JPEG, PNG, WebP supported.</span>
+          </label>
+          <input
+            type="file"
+            id="fileInput"
+            accept="image/*"
+            multiple
+            hidden
+          />
+          <ul id="thumbs" class="thumbs" aria-label="Uploaded photos"></ul>
+          <button id="clearBtn" type="button" disabled>Clear All</button>
         </section>
-      </div>
+
+        <section aria-labelledby="settings-heading">
+          <h2 id="settings-heading">Configure outcome</h2>
+          <form>
+            <fieldset class="control-row">
+              <legend class="visually-hidden">Canvas size</legend>
+              <label class="field">
+                <span>Width</span>
+                <input
+                  type="number"
+                  id="outWidth"
+                  value="800"
+                  min="100"
+                  max="10000"
+                  step="10"
+                />
+              </label>
+              <label class="field">
+                <span>Height</span>
+                <input
+                  type="number"
+                  id="outHeight"
+                  value="1200"
+                  min="100"
+                  max="10000"
+                  step="10"
+                />
+              </label>
+              <div
+                class="preset-btns"
+                role="group"
+                aria-label="Aspect ratio presets"
+              >
+                <button type="button" data-w="800" data-h="1200">2:3</button>
+                <button type="button" data-w="1200" data-h="800">3:2</button>
+                <button type="button" data-w="1080" data-h="1080">1:1</button>
+                <button type="button" data-w="1080" data-h="1920">9:16</button>
+                <button type="button" data-w="1920" data-h="1080">16:9</button>
+                <button type="button" data-w="1240" data-h="1748">A4</button>
+              </div>
+            </fieldset>
+
+            <fieldset class="control-row">
+              <legend class="visually-hidden">Layout options</legend>
+              <label class="field">
+                <span>Layout</span>
+                <select id="layout">
+                  <option value="justified-rows" selected>Auto rows</option>
+                  <option value="justified-cols">Auto cols</option>
+                  <option value="grid">Grid</option>
+                  <option value="columns">Masonry</option>
+                  <option value="hero-grid">Hero + grid</option>
+                  <option value="mosaic">Mosaic</option>
+                  <option value="polaroid">Polaroid scatter</option>
+                  <option value="row">One row</option>
+                  <option value="column">One column</option>
+                </select>
+              </label>
+              <label class="field" id="columnsField">
+                <span>Columns</span>
+                <input
+                  type="number"
+                  id="columns"
+                  value="2"
+                  min="1"
+                  max="10"
+                  step="1"
+                />
+              </label>
+              <label class="field" id="heroPosField">
+                <span>Hero position</span>
+                <select id="heroPos">
+                  <option value="start">Start</option>
+                  <option value="center" selected>Center</option>
+                  <option value="end">End</option>
+                </select>
+              </label>
+            </fieldset>
+
+            <fieldset class="control-row">
+              <legend class="visually-hidden">Appearance</legend>
+              <label class="field">
+                <span>Background</span>
+                <input type="color" id="bgColor" value="#ffffff" />
+              </label>
+              <label class="field">
+                <span>Gap</span>
+                <input type="range" id="gap" min="0" max="60" value="8" />
+                <output id="gapVal" for="gap">8</output>
+              </label>
+              <label class="field">
+                <span>Corner radius</span>
+                <input type="range" id="radius" min="0" max="60" value="0" />
+                <output id="radiusVal" for="radius">0</output>
+              </label>
+            </fieldset>
+          </form>
+        </section>
+        </div>
+      </details>
+
+      <section class="col-right" aria-labelledby="preview-heading">
+        <header class="preview-header">
+          <h2 id="preview-heading">See preview</h2>
+          <button id="downloadBtn" type="button" disabled>
+            Download Collage (PNG)
+          </button>
+        </header>
+        <figure id="previewWrap" class="preview-frame">
+          <canvas id="previewCanvas" aria-label="Collage preview"></canvas>
+          <figcaption id="previewPlaceholder" class="preview-placeholder" role="status">
+            Live preview
+          </figcaption>
+        </figure>
+      </section>
     </main>
 
     <script>
