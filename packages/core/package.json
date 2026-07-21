@@ -1,0 +1,55 @@
+{
+  "name": "@graphic-quicks/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic pure graphic-tool functions extracted from graphic-quicks: photo-edit (OpenCV.js), photo-collage (layout math), image-scale.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./photo-edit": {
+      "types": "./dist/photo-edit/index.d.ts",
+      "import": "./dist/photo-edit/index.js"
+    },
+    "./collage": {
+      "types": "./dist/collage/index.d.ts",
+      "import": "./dist/collage/index.js"
+    },
+    "./scale": {
+      "types": "./dist/scale/index.d.ts",
+      "import": "./dist/scale/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "fixtures": "tsx tests/photo-edit/generate-fixtures.ts"
+  },
+  "peerDependencies": {
+    "@techstark/opencv-js": "^5.0.0-release.1"
+  },
+  "peerDependenciesMeta": {
+    "@techstark/opencv-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@techstark/opencv-js": "^5.0.0-release.1",
+    "@types/node": "^26.1.0",
+    "@types/pngjs": "^6.0.5",
+    "pngjs": "^7.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
