@@ -2,6 +2,7 @@ import {
     computeScaledSize,
     SUPPORTED_SCALE_FACTORS,
 } from '../../packages/scale/dist/index.js';
+import '../../packages/ui-photo-upload/dist/index.js';
 
 // Browser canvas limits: exceeding them silently produces a blank canvas.
 const MAX_CANVAS_DIMENSION = 16384;
@@ -16,8 +17,7 @@ const STATUS_LABELS = {
     error: '⚠️ Error',
 };
 
-const uploadArea = document.getElementById('uploadArea');
-const fileInput = document.getElementById('fileInput');
+const photoUpload = document.querySelector('photo-upload');
 const scaleSelect = document.getElementById('scaleSelect');
 const imagesGrid = document.getElementById('imagesGrid');
 const emptyState = document.getElementById('emptyState');
@@ -44,35 +44,10 @@ for (const factor of SUPPORTED_SCALE_FACTORS) {
     scaleSelect.appendChild(option);
 }
 
-// Upload area click
-uploadArea.addEventListener('click', () => fileInput.click());
-
-// Drag and drop
-uploadArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadArea.classList.add('dragover');
-});
-
-uploadArea.addEventListener('dragleave', () => {
-    uploadArea.classList.remove('dragover');
-});
-
-uploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadArea.classList.remove('dragover');
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    if (files.length > 0) {
-        handleFiles(files);
-    }
-});
-
-// File input change
-fileInput.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-        handleFiles(files);
-    }
-    fileInput.value = '';
+// File intake: click-to-browse, drag-and-drop, accept filtering, and the
+// dragover visual state are all handled inside <photo-upload>.
+photoUpload.addEventListener('photo-upload:files', (e) => {
+    handleFiles(e.detail.files);
 });
 
 // Handle multiple files

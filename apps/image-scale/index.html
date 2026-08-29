@@ -39,33 +39,26 @@
             font-size: 14px;
         }
 
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
+        photo-upload {
             margin-bottom: 20px;
+            --photo-upload-border-width: 3px;
+            --photo-upload-border-style: dashed;
+            --photo-upload-border-color: #667eea;
+            --photo-upload-border-color-active: #764ba2;
+            --photo-upload-background-active: #f8f9ff;
+            --photo-upload-radius: 15px;
+            --photo-upload-padding: 40px;
+            --photo-upload-icon-size: 48px;
+            --photo-upload-gap: 10px;
         }
 
-        .upload-area:hover {
-            background: #f8f9ff;
-            border-color: #764ba2;
+        photo-upload[dragover] {
+            --photo-upload-background-active: #f0f2ff;
         }
 
-        .upload-area.dragover {
-            background: #f0f2ff;
-            border-color: #764ba2;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+        photo-upload .upload-hint {
+            font-size: 12px;
+            color: #999;
         }
 
         .controls {
@@ -318,12 +311,11 @@
         <h1>🖼️ Batch Image Upscaler</h1>
         <p class="subtitle">Upload and upscale multiple images at once</p>
 
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <p><strong>Click to upload</strong> or drag and drop</p>
-            <p style="font-size: 12px; color: #999; margin-top: 5px;">Select multiple images (PNG, JPG, WEBP)</p>
-            <input type="file" id="fileInput" accept="image/*" multiple>
-        </div>
+        <photo-upload accept="image/*" multiple>
+            <span slot="icon">📁</span>
+            <span slot="label"><strong>Click to upload</strong> or drag and drop</span>
+            <span slot="hint" class="upload-hint">Select multiple images (PNG, JPG, WEBP)</span>
+        </photo-upload>
 
         <div class="controls">
             <label for="scaleSelect">Upscale Factor:</label>

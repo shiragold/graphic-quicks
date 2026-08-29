@@ -148,7 +148,7 @@ Pure moves; apps keep their duplicated logic for now.
       styles included, built with the same tsconfig.base/vitest wiring.
       *Verify:* unit tests for the element's public contract (events fired,
       attributes reflected) under happy-dom/jsdom.
-- [ ] **4.3 Adopt in the apps,** one app per task, deleting each app's bespoke
+- [x] **4.3 Adopt in the apps,** one app per task, deleting each app's bespoke
       upload code.
       *Verify per app:* upload flow works served locally; no regression in the
       app's tests.

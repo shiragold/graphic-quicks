@@ -103,21 +103,17 @@
         flex-wrap: wrap;
       }
 
-      .upload-area {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 48px 20px;
-        width: 100%;
-        cursor: pointer;
+      photo-upload {
         font-size: 15px;
-        text-align: center;
+        --photo-upload-border-width: 0;
+        --photo-upload-radius: 0;
+        --photo-upload-padding: 48px 20px;
+        --photo-upload-gap: 12px;
       }
-      .upload-area__icon {
-        font-size: 40px;
-        line-height: 1;
+      /* The original hint line was full-size, full-opacity text. */
+      photo-upload::part(hint) {
+        font-size: 1em;
+        opacity: 1;
       }
 
       .thumbs {
@@ -248,8 +244,8 @@
         h2 {
           font-size: 22px;
         }
-        .upload-area {
-          padding: 36px 16px;
+        photo-upload {
+          --photo-upload-padding: 36px 16px;
         }
       }
     </style>
@@ -265,18 +261,11 @@
         <div class="left-col__body">
         <section aria-labelledby="upload-heading">
           <h2 id="upload-heading">Add photos</h2>
-          <label id="uploadArea" class="upload-area" for="fileInput">
-            <span class="upload-area__icon" aria-hidden="true">+</span>
-            <span><strong>Drop photos here</strong> or click to browse</span>
-            <span>Any number of images. JPEG, PNG, WebP supported.</span>
-          </label>
-          <input
-            type="file"
-            id="fileInput"
-            accept="image/*"
-            multiple
-            hidden
-          />
+          <photo-upload id="uploadArea" accept="image/*" multiple>
+            <span slot="icon">+</span>
+            <span slot="label"><strong>Drop photos here</strong> or click to browse</span>
+            <span slot="hint">Any number of images. JPEG, PNG, WebP supported.</span>
+          </photo-upload>
           <ul id="thumbs" class="thumbs" aria-label="Uploaded photos"></ul>
           <button id="clearBtn" type="button" disabled>Clear All</button>
         </section>

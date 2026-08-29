@@ -13,6 +13,15 @@
   .results figure canvas { width: 100%; height: auto; display: block; }
   #thumbnail-section figure { margin: 0; }
   #thumbnail { width: 100%; height: auto; display: block; }
+  photo-upload {
+    margin: 8px 0;
+    --photo-upload-padding: 24px 12px;
+    --photo-upload-icon-size: 28px;
+    --photo-upload-radius: 8px;
+    --photo-upload-border-color: #999;
+    --photo-upload-border-color-active: #333;
+    --photo-upload-background-active: rgba(0, 0, 0, 0.04);
+  }
 </style>
 </head>
 <body>
@@ -21,12 +30,10 @@
     <header><h1>Auto Crop</h1></header>
 
     <section aria-label="Configuration">
-      <form id="config-form">
-        <label>
-          Upload photo
-          <input type="file" id="file-input" accept="image/*">
-        </label>
-      </form>
+      <photo-upload id="upload" accept="image/*">
+        <span slot="label"><strong>Drop a photo here</strong> or click to browse</span>
+        <span slot="hint">One image at a time</span>
+      </photo-upload>
     </section>
 
     <section aria-label="Status">
@@ -73,10 +80,10 @@
 
 <script type="module">
   import { processMat } from '../../packages/photo-edit/dist/index.js';
+  import '../../packages/ui-photo-upload/dist/index.js';
 
   // OpenCV.js loader -----------------------------------------------------
   const statusEl = document.getElementById('status');
-  const fileInput = document.getElementById('file-input');
   let cvReady = false;
   let pendingFile = null;
 
@@ -95,8 +102,8 @@
   };
 
   // File handling --------------------------------------------------------
-  fileInput.addEventListener('change', (e) => {
-    const file = e.target.files && e.target.files[0];
+  document.getElementById('upload').addEventListener('photo-upload:files', (e) => {
+    const file = e.detail.files[0];
     if (!file) return;
     if (!cvReady) { pendingFile = file; statusEl.textContent = 'Waiting for OpenCV.js to finish loading…'; return; }
     handleFile(file);

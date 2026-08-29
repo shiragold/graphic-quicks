@@ -2,12 +2,12 @@ import {
   computeCollageLayout,
   readExifDate,
 } from "../../packages/collage/dist/index.js";
+import "../../packages/ui-photo-upload/dist/index.js";
 
 const photos = [];
 
 const $ = (id) => document.getElementById(id);
 const uploadArea = $("uploadArea");
-const fileInput = $("fileInput");
 const thumbsEl = $("thumbs");
 const canvas = $("previewCanvas");
 const ctx = canvas.getContext("2d");
@@ -54,8 +54,9 @@ function loadImage(file) {
   });
 }
 
-async function addFiles(fileList) {
-  const files = Array.from(fileList).filter((f) =>
+// Accepts any iterable of File (the File[] from <photo-upload>).
+async function addFiles(incoming) {
+  const files = Array.from(incoming).filter((f) =>
     f.type.startsWith("image/"),
   );
   if (!files.length) return;
@@ -266,27 +267,10 @@ function drawPolaroid(c, img, r) {
 }
 
 // ---------- Wire up ----------
-// Note: #uploadArea is a <label for="fileInput">, so the browser opens
-// the file picker natively on click. No extra click handler needed.
-fileInput.addEventListener("change", (e) => {
-  addFiles(e.target.files);
-  fileInput.value = "";
-});
-
-["dragenter", "dragover"].forEach((ev) => {
-  uploadArea.addEventListener(ev, (e) => {
-    e.preventDefault();
-    uploadArea.classList.add("dragover");
-  });
-});
-["dragleave", "drop"].forEach((ev) => {
-  uploadArea.addEventListener(ev, (e) => {
-    e.preventDefault();
-    uploadArea.classList.remove("dragover");
-  });
-});
-uploadArea.addEventListener("drop", (e) => {
-  if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+// <photo-upload> handles the picker, drag-and-drop, and dragover styling
+// itself; it emits a File[] on every selection or drop.
+uploadArea.addEventListener("photo-upload:files", (e) => {
+  addFiles(e.detail.files);
 });
 
 // All inputs commit on blur / Enter / drag-release (change event),
