@@ -1,7 +1,7 @@
 # graphic-quicks
 
-A pnpm workspace holding a set of standalone browser mini-apps (`photo-edit/`,
-`photo-collage/`, `image-scale.html`) plus three per-tool packages containing
+A pnpm workspace holding a set of standalone browser mini-apps under `apps/`
+(`photo-edit`, `photo-collage`, `image-scale`) plus three per-tool packages containing
 the pure graphic-tool functions extracted from them:
 `@graphic-quicks/photo-edit` (OpenCV.js deskew/crop helpers),
 `@graphic-quicks/collage` (collage layout math + EXIF date parsing), and
@@ -16,8 +16,12 @@ There is no umbrella package; `@graphic-quicks/core` was dissolved.
   pnpm-workspace.yaml              # globs packages/* and apps/*
   package.json                     # workspace root (private)
   tsconfig.base.json               # shared compilerOptions; packages extend it
-  vitest.config.ts                 # projects: ['packages/*'] — root test entry
+  vitest.config.ts                 # projects: packages/* + apps/*/vitest.config.ts
   eslint.config.js
+  apps/
+    photo-edit/                    # mini-app with its own test suite (in the workspace)
+    photo-collage/                 # static photo-collage.html
+    image-scale/                   # static index.html
   packages/
     photo-edit/                    # @graphic-quicks/photo-edit
       src/                         # 5 pure OpenCV functions
@@ -43,8 +47,8 @@ Run from the repo root. Node >= 22, pnpm 10.
 ```sh
 pnpm install
 pnpm lint                          # eslint across the repo
-pnpm -r typecheck                  # tsc --noEmit in each package
-pnpm test                          # root vitest projects run — all package suites (88 tests)
+pnpm -r typecheck                  # tsc --noEmit in each package + the photo-edit app
+pnpm test                          # root vitest projects run — packages + app suites (100 tests)
 pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + maps)
 ```
 
@@ -55,21 +59,11 @@ pnpm --filter @graphic-quicks/photo-edit test:watch
 pnpm --filter @graphic-quicks/photo-edit fixtures   # regenerate PNG test fixtures
 ```
 
-The mini-apps are static HTML — open `photo-edit/index.html`,
-`photo-collage/photo-collage.html`, or `image-scale.html` directly in a
-browser; no build step is involved. `photo-edit/` is *not* part of the pnpm
-workspace (it sits at the repo root, matched by neither the `packages/*` nor
-the `apps/*` glob) but has its own `package.json` and test suite, so
-`pnpm -r ...` from the root skips it:
-
-```sh
-cd photo-edit && pnpm install && pnpm test
-```
-
-Note: this suite currently fails under vitest 4.1.x — the app's
-`tests/setup.ts` still uses the top-level-await opencv-js import described in
-the ADR below. The package's suite has the fix; the app is migrated in Phase 3
-of `TASKS.md`.
+The mini-apps are static HTML — open `apps/photo-edit/index.html`,
+`apps/photo-collage/photo-collage.html`, or `apps/image-scale/index.html`
+directly in a browser; no build step is involved. `apps/photo-edit` is a
+workspace project (the `apps/*` glob), so its test suite runs under the root
+`pnpm test` alongside the packages.
 
 ## ADR
 
@@ -90,8 +84,8 @@ positioned rectangles and leave rendering to the caller.
 
 ### The mini-apps are not consumers of the packages (yet)
 
-`photo-edit/`, `photo-collage/`, and `image-scale.html` were not modified when
-the packages were extracted; they still carry their own copies of the logic.
+The apps were not modified when the packages were extracted; they still carry
+their own copies of the logic.
 Changing a shared algorithm therefore requires touching both places, or
 migrating the mini-app first — migration is Phase 3 of `TASKS.md`.
 

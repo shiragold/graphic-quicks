@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import type { Mat } from '@techstark/opencv-js';
-import { makePhoto, toMat, compareImages, type Fixture } from './fixtures.js';
+import {
+  makePhoto,
+  toMat,
+  matToRawImage,
+  compareImages,
+  type Fixture,
+} from './fixtures.js';
 import {
   sampleBackgroundColor,
   detectSkewAngle,
@@ -69,31 +74,30 @@ interface PipelineComparison {
 
 // Runs the full pipeline against a fixture, produces the 3 output crops the
 // same way index.html does, and compares each to its ground-truth image.
+//
+// Note: we extract crops via matToRawImage (a row-by-row copy) rather than
+// mat.roi().clone() because @techstark/opencv-js's clone() does not
+// re-tighten the buffer for a ROI — it memcpy's rows*cols*4 contiguous bytes
+// from the ROI origin, so consecutive rows overlap with the parent's
+// neighboring pixels. matToRawImage sidesteps that.
 function runPipelineAndCompare(fx: Fixture): PipelineComparison {
   const src = toMat(fx.input);
   const out = processMat(src);
-  let tight: Mat = src;
-  let deTight: Mat = out.rotated;
-  let dePadded: Mat = out.rotated;
-  let tightOwned = false;
-  let deTightOwned = false;
-  let dePadOwned = false;
   try {
-    if (out.bboxOriginal) {
-      tight = src.roi(out.bboxOriginal);
-      tightOwned = true;
-    }
+    const tight = out.bboxOriginal
+      ? matToRawImage(src, out.bboxOriginal)
+      : matToRawImage(src);
+    let deTight = matToRawImage(out.rotated);
+    let dePadded = matToRawImage(out.rotated);
     if (out.bboxRotated) {
-      deTight = out.rotated.roi(out.bboxRotated);
-      deTightOwned = true;
+      deTight = matToRawImage(out.rotated, out.bboxRotated);
       const padX = Math.round(out.bboxRotated.width * 0.02);
       const padY = Math.round(out.bboxRotated.height * 0.02);
       const px = Math.max(0, out.bboxRotated.x - padX);
       const py = Math.max(0, out.bboxRotated.y - padY);
       const pw = Math.min(out.rotated.cols - px, out.bboxRotated.width + 2 * padX);
       const ph = Math.min(out.rotated.rows - py, out.bboxRotated.height + 2 * padY);
-      dePadded = out.rotated.roi(new cv.Rect(px, py, pw, ph));
-      dePadOwned = true;
+      dePadded = matToRawImage(out.rotated, { x: px, y: py, width: pw, height: ph });
     }
     return {
       theta: out.theta,
@@ -102,9 +106,6 @@ function runPipelineAndCompare(fx: Fixture): PipelineComparison {
       dePadCmp: compareImages(dePadded, fx.expected.outputs.deskewedPadded),
     };
   } finally {
-    if (tightOwned) tight.delete();
-    if (deTightOwned) deTight.delete();
-    if (dePadOwned) dePadded.delete();
     out.rotated.delete();
     src.delete();
   }

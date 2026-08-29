@@ -170,6 +170,34 @@ export function toMat(img: RawImage): Mat {
   return m;
 }
 
+// Extract a Mat's entire content (or a sub-region) as a fresh, row-tight
+// RawImage. Works around a @techstark/opencv-js quirk: `mat.roi(rect).clone()`
+// does NOT re-tighten the buffer — it just memcpy's `rect.h * rect.w * 4`
+// contiguous bytes starting at the ROI origin, so consecutive rows overlap
+// with the parent's neighboring pixels. We copy row-by-row from `mat.data`,
+// which is the safe, portable way to get a proper tight-packed crop.
+export function matToRawImage(
+  src: Mat,
+  rect?: { x: number; y: number; width: number; height: number },
+): RawImage {
+  const rx = rect?.x ?? 0;
+  const ry = rect?.y ?? 0;
+  const rw = rect?.width ?? src.cols;
+  const rh = rect?.height ?? src.rows;
+  const srcRowBytes = src.cols * 4;
+  const dstRowBytes = rw * 4;
+  const rgba = new Uint8ClampedArray(rw * rh * 4);
+  const srcData = src.data as Uint8Array;
+  for (let y = 0; y < rh; y++) {
+    const srcStart = (ry + y) * srcRowBytes + rx * 4;
+    const dstStart = y * dstRowBytes;
+    for (let i = 0; i < dstRowBytes; i++) {
+      rgba[dstStart + i] = srcData[srcStart + i];
+    }
+  }
+  return { rgba, width: rw, height: rh };
+}
+
 export interface CompareOptions {
   // Ignore this many pixels around the edge of the overlap region (warpAffine
   // + tight-crop produce ~1-2 px of edge anti-aliasing that doesn't match the
@@ -188,17 +216,22 @@ export interface CompareResult {
   expectedSize: { w: number; h: number };
 }
 
-// Center-aligns actual (Mat) and expected (RawImage), crops to their common
-// inner region (minus borderPx margin), and reports mean and max per-channel
-// absolute difference over the compared pixels.
+// Center-aligns actual and expected, crops to their common inner region (minus
+// borderPx margin), and reports mean and max per-channel absolute difference
+// over the compared pixels. Accepts either a Mat (using its .data + cols/rows)
+// or a RawImage for `actual`; expected is always a RawImage. When given a Mat,
+// this is only safe if the Mat's data buffer is row-tight (cols*rows*4 bytes
+// with stride == cols*4) — for ROIs, first convert with matToRawImage.
 export function compareImages(
-  actual: Mat,
+  actual: Mat | RawImage,
   expected: RawImage,
   opts: CompareOptions = {},
 ): CompareResult {
   const { borderPx = 3, maxSizeDeltaPx = 12 } = opts;
-  const aW = actual.cols;
-  const aH = actual.rows;
+  const aW = 'cols' in actual ? actual.cols : actual.width;
+  const aH = 'cols' in actual ? actual.rows : actual.height;
+  const aData: Uint8Array | Uint8ClampedArray =
+    'cols' in actual ? (actual.data as Uint8Array) : actual.rgba;
   const eW = expected.width;
   const eH = expected.height;
   if (Math.abs(aW - eW) > maxSizeDeltaPx || Math.abs(aH - eH) > maxSizeDeltaPx) {
@@ -216,7 +249,6 @@ export function compareImages(
   const aOffY = Math.floor((aH - h) / 2);
   const eOffX = Math.floor((eW - w) / 2);
   const eOffY = Math.floor((eH - h) / 2);
-  const aData = actual.data as Uint8Array;
   let sum = 0;
   let max = 0;
   let count = 0;

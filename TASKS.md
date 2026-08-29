@@ -90,18 +90,18 @@ all green, 88 tests.
 
 Pure moves; apps keep their duplicated logic for now.
 
-- [ ] **2.1 `photo-edit/` → `apps/photo-edit/`.** Delete its `package-lock.json`
+- [x] **2.1 `photo-edit/` → `apps/photo-edit/`.** Delete its `package-lock.json`
       and fold deps into pnpm (`pnpm install` from root now covers it — it joins
       the workspace via the `apps/*` glob). Hook its vitest config into the root
       projects config.
       *Verify:* `pnpm -r test` from root now includes its suite (record new total
       test count as the baseline going forward); `apps/photo-edit/index.html`
       still works served locally.
-- [ ] **2.2 `photo-collage/` → `apps/photo-collage/`.** Static move, no deps.
+- [x] **2.2 `photo-collage/` → `apps/photo-collage/`.** Static move, no deps.
       *Verify:* page opens and renders all 7 layouts.
-- [ ] **2.3 `image-scale.html` → `apps/image-scale/index.html`.** Static move.
+- [x] **2.3 `image-scale.html` → `apps/image-scale/index.html`.** Static move.
       *Verify:* page opens, scales an image.
-- [ ] **2.4 Update CI paths / AGENTS.md** for the new layout.
+- [x] **2.4 Update CI paths / AGENTS.md** for the new layout.
       *Verify:* CI green on the branch.
 
 ## Phase 3 — Migrate mini-apps onto packages (one at a time)
