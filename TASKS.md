@@ -50,7 +50,7 @@ all green, 88 tests.
       the root `test` script at it.
       *Verify:* `pnpm -r typecheck` green; a single `vitest run` from root runs
       all 88 core tests.
-- [ ] **1.2 `packages/scale`** (smallest, no OpenCV — proves the package shape).
+- [x] **1.2 `packages/scale`** (smallest, no OpenCV — proves the package shape).
       Move `core/src/scale` → `packages/scale/src`, `core/tests/scale` →
       `packages/scale/tests`. `package.json` with `.` export → `dist/index.js`,
       build/test/typecheck scripts, tsconfigs extending base. Keep `core`'s

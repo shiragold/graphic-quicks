@@ -18,10 +18,6 @@
     "./collage": {
       "types": "./dist/collage/index.d.ts",
       "import": "./dist/collage/index.js"
-    },
-    "./scale": {
-      "types": "./dist/scale/index.d.ts",
-      "import": "./dist/scale/index.js"
     }
   },
   "files": [

@@ -4,7 +4,7 @@ import {
   SUPPORTED_SCALE_FACTORS,
   computeScaledSize,
   type ScaleFactor,
-} from '../../src/scale/index.js';
+} from '../src/index.js';
 
 describe('computeScaledSize', () => {
   it('doubles both dimensions for factor=2', () => {
