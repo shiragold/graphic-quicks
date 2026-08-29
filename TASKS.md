@@ -106,7 +106,7 @@ Pure moves; apps keep their duplicated logic for now.
 
 ## Phase 3 — Migrate mini-apps onto packages (one at a time)
 
-- [ ] **3.0 Dev-serve story.** Root `serve` script (any static server) + README/
+- [x] **3.0 Dev-serve story.** Root `serve` script (any static server) + README/
       AGENTS.md note: `pnpm -r build` then `pnpm serve`, open
       `localhost:.../apps/<app>/`. Needed because `dist/` imports kill `file://`.
       *Verify:* fresh-clone dry run: install → build → serve → all three apps load.

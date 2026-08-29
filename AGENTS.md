@@ -59,11 +59,18 @@ pnpm --filter @graphic-quicks/photo-edit test:watch
 pnpm --filter @graphic-quicks/photo-edit fixtures   # regenerate PNG test fixtures
 ```
 
-The mini-apps are static HTML — open `apps/photo-edit/index.html`,
-`apps/photo-collage/photo-collage.html`, or `apps/image-scale/index.html`
-directly in a browser; no build step is involved. `apps/photo-edit` is a
-workspace project (the `apps/*` glob), so its test suite runs under the root
-`pnpm test` alongside the packages.
+The mini-apps are buildless static HTML, but they import the packages'
+`dist/` over HTTP, so they cannot be opened via `file://` (ES modules are
+CORS-fetched and `file://` is an opaque origin). Run them locally with:
+
+```sh
+pnpm -r build   # dist/ is not committed; needed after clone or package changes
+pnpm serve      # static server at the repo root
+# then open http://localhost:3000/apps/photo-edit/ etc.
+```
+
+`apps/photo-edit` is a workspace project (the `apps/*` glob), so its test
+suite runs under the root `pnpm test` alongside the packages.
 
 ## ADR
 
