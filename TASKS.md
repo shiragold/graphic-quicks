@@ -110,7 +110,7 @@ Pure moves; apps keep their duplicated logic for now.
       AGENTS.md note: `pnpm -r build` then `pnpm serve`, open
       `localhost:.../apps/<app>/`. Needed because `dist/` imports kill `file://`.
       *Verify:* fresh-clone dry run: install → build → serve → all three apps load.
-- [ ] **3.1 image-scale → `@graphic-quicks/scale`** (smallest first). Replace the
+- [x] **3.1 image-scale → `@graphic-quicks/scale`** (smallest first). Replace the
       inlined math with an import of `../../packages/scale/dist/index.js`; keep
       canvas resampling in the app.
       **Decision point before starting:** the app has four known bugs (see
@@ -122,13 +122,13 @@ Pure moves; apps keep their duplicated logic for now.
       *Verify:* scaled output byte-identical to the old page for a sample image;
       DevTools network shows only the scale package fetched (no collage, no
       OpenCV).
-- [ ] **3.2 photo-collage → `@graphic-quicks/collage`.** Replace inlined layout
+- [x] **3.2 photo-collage → `@graphic-quicks/collage`.** Replace inlined layout
       math + EXIF parsing (the 7 layout functions and `readExifDate` are already
       in the package, tested); keep rendering (`render`, `drawPolaroid`) in the
       app.
       *Verify:* each of the 7 layouts renders identically to the old page
       (screenshot diff); EXIF-date sorting unchanged on a sample set.
-- [ ] **3.3 photo-edit app → `@graphic-quicks/photo-edit`.** Replace
+- [x] **3.3 photo-edit app → `@graphic-quicks/photo-edit`.** Replace
       `photo-edit.js` logic with package imports; keep canvas/DOM/upload code.
       First diff `apps/photo-edit/tests/` against the package's tests and fold in
       any coverage the package lacks; then delete `photo-edit.js` + `.d.ts` and
@@ -136,7 +136,7 @@ Pure moves; apps keep their duplicated logic for now.
       *Verify:* deskew + crop output matches on the PNG fixtures; no test-count
       regression vs the Phase 2.1 baseline; manual smoke of the full pipeline in
       the browser.
-- [ ] **3.4 Retire the "mini-apps are not consumers of core" ADR** in AGENTS.md;
+- [x] **3.4 Retire the "mini-apps are not consumers of core" ADR** in AGENTS.md;
       document the new rule: shared algorithms live only in packages.
       *Verify:* `rg` finds no duplicated algorithm code left in `apps/`.
 

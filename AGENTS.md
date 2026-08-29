@@ -89,12 +89,12 @@ mini-apps. `image-scale`'s Canvas resampling is likewise not ported — only
 `computeScaledSize` and `SUPPORTED_SCALE_FACTORS` are. Layout functions return
 positioned rectangles and leave rendering to the caller.
 
-### The mini-apps are not consumers of the packages (yet)
+### The apps are consumers of the packages
 
-The apps were not modified when the packages were extracted; they still carry
-their own copies of the logic.
-Changing a shared algorithm therefore requires touching both places, or
-migrating the mini-app first — migration is Phase 3 of `TASKS.md`.
+Shared algorithms live only in `packages/`. Each app imports its tool's built
+module over a relative path (`../../packages/<tool>/dist/index.js`) from a
+`<script type="module">` — no bundler. Changing an algorithm means changing
+the package (and its tests); apps carry only canvas/DOM/upload code.
 
 ### `cv` is an ambient global, not an import
 

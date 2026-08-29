@@ -1,8 +1,8 @@
 # Photo Collage Maker
 
-A single-file, dependency-free HTML/JS tool that builds a photo collage from any number of uploaded images. Everything runs locally in the browser -- no server, no upload, no framework, no bundle.
+A buildless HTML/JS tool that builds a photo collage from any number of uploaded images. Everything runs locally in the browser -- no upload, no framework, no bundle. The layout math and EXIF date parsing are imported from `@graphic-quicks/collage` (`packages/collage/dist`); the app keeps only the Canvas rendering, file loading, and DOM wiring.
 
-Open `photo-collage.html` directly in a browser.
+Because `app.js` is an ES module importing across directories, serve the repo root over HTTP (e.g. `npx serve .`) and open `apps/photo-collage/photo-collage.html`.
 
 ## Features
 
@@ -21,7 +21,7 @@ Open `photo-collage.html` directly in a browser.
 
 ## EXIF date extraction
 
-Done inline without any library. The first 256 KB of each JPEG is read via `ArrayBuffer` + `DataView`. We walk the JPEG marker chain to find the `APP1` segment, verify the `"Exif"` magic, parse the TIFF header (handling both little- and big-endian byte order), follow the `ExifOffset` (tag `0x8769`) into the EXIF SubIFD, and read `DateTimeOriginal` (tag `0x9003`) or `DateTimeDigitized` (tag `0x9004`). The string format is `"YYYY:MM:DD HH:MM:SS"`.
+Implemented in `@graphic-quicks/collage` (`readExifDate`); the app reads the file head and hands the bytes over. The first 256 KB of each JPEG is read via `ArrayBuffer` + `DataView`. We walk the JPEG marker chain to find the `APP1` segment, verify the `"Exif"` magic, parse the TIFF header (handling both little- and big-endian byte order), follow the `ExifOffset` (tag `0x8769`) into the EXIF SubIFD, and read `DateTimeOriginal` (tag `0x9003`) or `DateTimeDigitized` (tag `0x9004`). The string format is `"YYYY:MM:DD HH:MM:SS"`.
 
 If the file is not a JPEG, has no EXIF, or parsing fails, we fall back to `file.lastModified`.
 
@@ -29,7 +29,7 @@ Each upload batch is sorted oldest-first by the resolved date and appended to th
 
 ## The justified layout algorithm
 
-This is the interesting part. The goal is:
+The implementation lives in `packages/collage` (`justifiedRows` / `justifiedCols`, dispatched via `computeCollageLayout`); this section documents how it works. The goal is:
 
 > Show every uploaded photo in full -- **no cropping**, **no edge gaps**, on a fixed-size canvas, regardless of the photos' aspect ratios.
 
@@ -135,5 +135,6 @@ For completeness, the other layout modes are simple:
 
 ## Files
 
-- `photo-collage.html` -- the entire tool (HTML + CSS + JS in one file).
+- `photo-collage.html` -- markup and styles.
+- `app.js` -- rendering, file loading, and DOM wiring; imports layout math and EXIF parsing from `../../packages/collage/dist/index.js`.
 - `README.md` -- this document.

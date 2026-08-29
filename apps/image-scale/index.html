@@ -245,6 +245,21 @@
             color: white;
         }
 
+        .status-error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .image-card.error {
+            border-color: #dc3545;
+        }
+
+        .image-error {
+            font-size: 11px;
+            color: #dc3545;
+            margin-top: 5px;
+        }
+
         .remove-btn {
             position: absolute;
             top: 10px;
@@ -312,12 +327,7 @@
 
         <div class="controls">
             <label for="scaleSelect">Upscale Factor:</label>
-            <select id="scaleSelect">
-                <option value="2">2x (Double)</option>
-                <option value="3">3x (Triple)</option>
-                <option value="4">4x (Quadruple)</option>
-                <option value="8">8x (Extreme)</option>
-            </select>
+            <select id="scaleSelect"></select>
         </div>
 
         <div class="stats" id="stats"></div>
@@ -342,271 +352,6 @@
         </div>
     </div>
 
-    <script>
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const scaleSelect = document.getElementById('scaleSelect');
-        const imagesGrid = document.getElementById('imagesGrid');
-        const emptyState = document.getElementById('emptyState');
-        const stats = document.getElementById('stats');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressFill = document.getElementById('progressFill');
-        const actionButtons = document.getElementById('actionButtons');
-        const upscaleAllBtn = document.getElementById('upscaleAllBtn');
-        const downloadAllBtn = document.getElementById('downloadAllBtn');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-
-        let images = [];
-        let processingQueue = [];
-
-        // Upload area click
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-            if (files.length > 0) {
-                handleFiles(files);
-            }
-        });
-
-        // File input change
-        fileInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length > 0) {
-                handleFiles(files);
-            }
-            fileInput.value = '';
-        });
-
-        // Handle multiple files
-        function handleFiles(files) {
-            files.forEach(file => {
-                const id = Date.now() + Math.random();
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        images.push({
-                            id: id,
-                            name: file.name,
-                            file: file,
-                            original: img,
-                            upscaled: null,
-                            status: 'pending'
-                        });
-                        renderImages();
-                        updateStats();
-                    };
-                    img.src = e.target.result;
-                };
-                
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Render images grid
-        function renderImages() {
-            if (images.length === 0) {
-                emptyState.style.display = 'block';
-                imagesGrid.style.display = 'none';
-                actionButtons.style.display = 'none';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-            imagesGrid.style.display = 'grid';
-            actionButtons.style.display = 'flex';
-
-            imagesGrid.innerHTML = images.map(img => `
-                <div class="image-card ${img.status === 'processing' ? 'processing' : ''} ${img.status === 'completed' ? 'completed' : ''}" data-id="${img.id}">
-                    <button class="remove-btn" onclick="removeImage(${img.id})">×</button>
-                    <img src="${img.original.src}" class="image-preview" alt="${img.name}">
-                    <div class="image-name" title="${img.name}">${img.name}</div>
-                    <div class="image-info">
-                        ${img.original.width} × ${img.original.height}px
-                        ${img.upscaled ? `→ ${img.upscaled.width} × ${img.upscaled.height}px` : ''}
-                    </div>
-                    <span class="image-status status-${img.status}">
-                        ${img.status === 'pending' ? '⏳ Pending' : ''}
-                        ${img.status === 'processing' ? '⚙️ Processing' : ''}
-                        ${img.status === 'completed' ? '✓ Completed' : ''}
-                    </span>
-                </div>
-            `).join('');
-        }
-
-        // Remove image
-        window.removeImage = function(id) {
-            images = images.filter(img => img.id !== id);
-            renderImages();
-            updateStats();
-        };
-
-        // Update stats
-        function updateStats() {
-            const completed = images.filter(img => img.status === 'completed').length;
-            const total = images.length;
-
-            if (total === 0) {
-                stats.classList.remove('active');
-                downloadAllBtn.style.display = 'none';
-                return;
-            }
-
-            stats.classList.add('active');
-            stats.innerHTML = `
-                <strong>Images:</strong> ${total} uploaded | 
-                <strong>Completed:</strong> ${completed}/${total} | 
-                <strong>Scale:</strong> ${scaleSelect.value}x
-            `;
-
-            if (completed === total && total > 0) {
-                downloadAllBtn.style.display = 'block';
-            } else {
-                downloadAllBtn.style.display = 'none';
-            }
-        }
-
-        // Upscale all button
-        upscaleAllBtn.addEventListener('click', async () => {
-            const scale = parseInt(scaleSelect.value);
-            const pending = images.filter(img => img.status === 'pending');
-            
-            if (pending.length === 0) {
-                alert('All images are already upscaled!');
-                return;
-            }
-
-            upscaleAllBtn.disabled = true;
-            progressContainer.classList.add('active');
-
-            for (let i = 0; i < pending.length; i++) {
-                const img = pending[i];
-                img.status = 'processing';
-                renderImages();
-
-                await upscaleImage(img, scale);
-
-                img.status = 'completed';
-                
-                const progress = Math.round(((i + 1) / pending.length) * 100);
-                progressFill.style.width = progress + '%';
-                progressFill.textContent = progress + '%';
-                
-                renderImages();
-                updateStats();
-
-                // Small delay to prevent UI freezing
-                await new Promise(resolve => setTimeout(resolve, 50));
-            }
-
-            upscaleAllBtn.disabled = false;
-            progressContainer.classList.remove('active');
-            progressFill.style.width = '0%';
-        });
-
-        // Upscale single image
-        async function upscaleImage(imageObj, scale) {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-
-                const newWidth = imageObj.original.width * scale;
-                const newHeight = imageObj.original.height * scale;
-
-                canvas.width = newWidth;
-                canvas.height = newHeight;
-
-                ctx.drawImage(imageObj.original, 0, 0, newWidth, newHeight);
-
-                imageObj.upscaled = canvas;
-                resolve();
-            });
-        }
-
-        // Download all button - creates a zip file
-        downloadAllBtn.addEventListener('click', async () => {
-            const completed = images.filter(img => img.status === 'completed');
-            
-            if (completed.length === 0) {
-                alert('No images to download!');
-                return;
-            }
-
-            downloadAllBtn.disabled = true;
-            downloadAllBtn.textContent = 'Creating ZIP...';
-
-            try {
-                const zip = new JSZip();
-                
-                // Add each image to the zip
-                for (const img of completed) {
-                    const dataURL = img.upscaled.toDataURL('image/png');
-                    const base64Data = dataURL.split(',')[1];
-                    const baseName = img.name.replace(/\.[^/.]+$/, '');
-                    zip.file(`${baseName}_upscaled_${scaleSelect.value}x.png`, base64Data, {base64: true});
-                }
-
-                // Generate zip file
-                const content = await zip.generateAsync({type: 'blob'});
-                
-                // Download the zip
-                const url = URL.createObjectURL(content);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `upscaled_images_${scaleSelect.value}x.zip`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                downloadAllBtn.textContent = 'Download All';
-            } catch (error) {
-                console.error('Error creating zip:', error);
-                alert('Error creating zip file. Please try again.');
-            }
-            
-            downloadAllBtn.disabled = false;
-        });
-
-        // Clear all button
-        clearAllBtn.addEventListener('click', () => {
-            if (images.length === 0) return;
-            
-            if (confirm(`Clear all ${images.length} images?`)) {
-                images = [];
-                renderImages();
-                updateStats();
-                progressContainer.classList.remove('active');
-            }
-        });
-
-        // Update stats when scale changes
-        scaleSelect.addEventListener('change', () => {
-            // Reset all to pending if scale changes
-            images.forEach(img => {
-                img.status = 'pending';
-                img.upscaled = null;
-            });
-            renderImages();
-            updateStats();
-        });
-    </script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
