@@ -78,11 +78,11 @@ all green, 88 tests.
       `import-x/no-restricted-paths` config in `eslint.config.js` is now enforced
       structurally by the package split. Simplify the config; keep ESLint itself.
       *Verify:* `pnpm lint` green.
-- [ ] **1.7 Update `AGENTS.md`** — structure tree, commands, ADRs ("public API is
+- [x] **1.7 Update `AGENTS.md`** — structure tree, commands, ADRs ("public API is
       namespaced" ADR is retired; opencv/setup/roi-clone ADRs move under
       photo-edit's context).
       *Verify:* every command listed in AGENTS.md actually runs.
-- [ ] **1.8 Full gate:** `pnpm lint && pnpm -r typecheck && pnpm -r test &&
+- [x] **1.8 Full gate:** `pnpm lint && pnpm -r typecheck && pnpm -r test &&
       pnpm -r build` — same 88 tests passing, dist emitted per package. Commit
       point.
 
