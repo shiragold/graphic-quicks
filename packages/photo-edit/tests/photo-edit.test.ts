@@ -12,7 +12,7 @@ import {
   detectSkewAngle,
   detectPhotoBBox,
   processMat,
-} from '../../src/photo-edit/index.js';
+} from '../src/index.js';
 
 declare const cv: CV;
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   masonry,
   type InnerRegion,
-} from '../../src/collage/index.js';
+} from '../src/index.js';
 
 const REGION: InnerRegion = { x: 0, y: 0, w: 900, h: 600, gap: 0 };
 

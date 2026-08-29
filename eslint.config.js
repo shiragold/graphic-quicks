@@ -1,19 +1,8 @@
 import importX, { createNodeResolver } from 'eslint-plugin-import-x';
 import tseslint from 'typescript-eslint';
 
-const root = import.meta.dirname;
-
-const TOOL_DOMAINS = ['photo-edit', 'collage', 'scale'];
-
-const domainDir = (name) => `packages/core/src/${name}`;
-
-/** Each tool domain in core is a black box to the other two; only src/index.ts may span them. */
-const boundaryZones = TOOL_DOMAINS.map((domain) => ({
-  target: domainDir(domain),
-  from: TOOL_DOMAINS.filter((other) => other !== domain).map(domainDir),
-  message: `core/${domain} must not import from another tool domain; the tool domains are independent and only src/index.ts may combine them.`,
-}));
-
+// Tool boundaries are enforced structurally since the per-tool package split
+// (@graphic-quicks/photo-edit, /collage, /scale); no path-restriction rule needed.
 export default tseslint.config(
   {
     ignores: ['**/dist/**', '**/coverage/**'],
@@ -38,15 +27,6 @@ export default tseslint.config(
             '.cjs': ['.cts', '.cjs'],
           },
         }),
-      ],
-    },
-    rules: {
-      'import-x/no-restricted-paths': [
-        'error',
-        {
-          basePath: root,
-          zones: boundaryZones,
-        },
       ],
     },
   },

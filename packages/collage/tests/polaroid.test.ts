@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   polaroid,
   type InnerRegion,
-} from '../../src/collage/index.js';
+} from '../src/index.js';
 
 const REGION: InnerRegion = { x: 0, y: 0, w: 1000, h: 800, gap: 0 };
 

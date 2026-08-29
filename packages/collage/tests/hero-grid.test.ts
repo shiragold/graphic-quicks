@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   heroGrid,
   type InnerRegion,
-} from '../../src/collage/index.js';
+} from '../src/index.js';
 
 const LANDSCAPE: InnerRegion = { x: 0, y: 0, w: 1200, h: 800, gap: 0 };
 const PORTRAIT: InnerRegion = { x: 0, y: 0, w: 800, h: 1200, gap: 0 };

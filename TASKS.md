@@ -58,10 +58,10 @@ all green, 88 tests.
       or delete the core copy now — either way no duplicate source.
       *Verify:* `pnpm --filter @graphic-quicks/scale typecheck && test && build`;
       scale tests pass; `dist/` emitted with `.js` + `.d.ts` + maps.
-- [ ] **1.3 `packages/collage`.** Same recipe: `core/src/collage` + its 7 test
+- [x] **1.3 `packages/collage`.** Same recipe: `core/src/collage` + its 7 test
       files. `mosaic-templates.ts` moves verbatim (ADR: data, not code).
       *Verify:* per-package typecheck/test/build green.
-- [ ] **1.4 `packages/photo-edit`.** Move `core/src/photo-edit`, its tests,
+- [x] **1.4 `packages/photo-edit`.** Move `core/src/photo-edit`, its tests,
       `tests/setup.ts` (createRequire opencv loader), `fixtures.ts` +
       `generate-fixtures.ts` + PNG fixtures, and the `fixtures` script.
       `@techstark/opencv-js` optional peer dep lives here only; `pngjs`/`tsx`
@@ -70,11 +70,11 @@ all green, 88 tests.
       *Verify:* per-package typecheck/test/build green; opencv loads in
       `beforeAll`; `pnpm --filter @graphic-quicks/photo-edit fixtures` still
       regenerates fixtures.
-- [ ] **1.5 Delete `packages/core`.** Remove the directory, its lockfile entries
+- [x] **1.5 Delete `packages/core`.** Remove the directory, its lockfile entries
       (`pnpm install`), and any lingering references.
       *Verify:* `rg "@graphic-quicks/core"` finds nothing outside docs;
       `pnpm -r build` green.
-- [ ] **1.6 Remove the ESLint boundary rule.** The three-zone
+- [x] **1.6 Remove the ESLint boundary rule.** The three-zone
       `import-x/no-restricted-paths` config in `eslint.config.js` is now enforced
       structurally by the package split. Simplify the config; keep ESLint itself.
       *Verify:* `pnpm lint` green.

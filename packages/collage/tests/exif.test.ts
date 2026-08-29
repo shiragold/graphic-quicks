@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readExifDate } from '../../src/collage/index.js';
+import { readExifDate } from '../src/index.js';
 
 /**
  * Build a minimal, valid JPEG that carries a single APP1/EXIF segment with

@@ -3,7 +3,7 @@ import {
   justifiedCols,
   justifiedRows,
   type InnerRegion,
-} from '../../src/collage/index.js';
+} from '../src/index.js';
 
 const region = (
   overrides: Partial<InnerRegion> = {},

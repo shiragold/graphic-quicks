@@ -6,7 +6,7 @@ import {
   type LayoutKind,
   type PolaroidPlacement,
   type Rect,
-} from '../../src/collage/index.js';
+} from '../src/index.js';
 
 const isPolaroid = (p: CollagePlacement): p is PolaroidPlacement =>
   'polaroid' in p;

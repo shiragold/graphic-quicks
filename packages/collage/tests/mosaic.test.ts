@@ -3,7 +3,7 @@ import {
   mosaic,
   type InnerRegion,
   type Rect,
-} from '../../src/collage/index.js';
+} from '../src/index.js';
 
 const REGION: InnerRegion = { x: 0, y: 0, w: 1000, h: 800, gap: 0 };
 const REGION_PORTRAIT: InnerRegion = { x: 0, y: 0, w: 800, h: 1000, gap: 0 };

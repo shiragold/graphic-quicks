@@ -1,5 +1,5 @@
 import type { Mat, CV } from '@techstark/opencv-js';
-import type { RGB } from '../../src/photo-edit/index.js';
+import type { RGB } from '../src/index.js';
 
 // `cv` resolves to `globalThis.cv`, which tests/setup.ts populates before any
 // test runs.
