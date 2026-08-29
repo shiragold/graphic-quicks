@@ -142,9 +142,9 @@ Pure moves; apps keep their duplicated logic for now.
 
 ## Phase 4 — First UI package
 
-- [ ] **4.1 Inventory upload UI** across the three apps (dropzone, file input,
+- [x] **4.1 Inventory upload UI** across the three apps (dropzone, file input,
       thumbnail tray) and specify the custom element's attributes/events.
-- [ ] **4.2 `packages/ui-photo-upload`:** zero-dep custom element, markup +
+- [x] **4.2 `packages/ui-photo-upload`:** zero-dep custom element, markup +
       styles included, built with the same tsconfig.base/vitest wiring.
       *Verify:* unit tests for the element's public contract (events fired,
       attributes reflected) under happy-dom/jsdom.

@@ -33,6 +33,9 @@ There is no umbrella package; `@graphic-quicks/core` was dissolved.
     scale/                         # @graphic-quicks/scale
       src/                         # computeScaledSize
       tests/                       # unit tests
+    ui-photo-upload/               # @graphic-quicks/ui-photo-upload
+      src/                         # <photo-upload> custom element
+      tests/                       # element contract tests (happy-dom)
 ```
 
 Each package carries the same wiring: `package.json`, `tsconfig.json` (editor +
@@ -48,7 +51,7 @@ Run from the repo root. Node >= 22, pnpm 10.
 pnpm install
 pnpm lint                          # eslint across the repo
 pnpm -r typecheck                  # tsc --noEmit in each package + the photo-edit app
-pnpm test                          # root vitest projects run — packages + app suites (100 tests)
+pnpm test                          # root vitest projects run — packages + app suites (108 tests)
 pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + maps)
 ```
 
@@ -95,6 +98,21 @@ Shared algorithms live only in `packages/`. Each app imports its tool's built
 module over a relative path (`../../packages/<tool>/dist/index.js`) from a
 `<script type="module">` — no bundler. Changing an algorithm means changing
 the package (and its tests); apps carry only canvas/DOM/upload code.
+
+### UI packages are zero-dep custom elements
+
+Shared UI lives in `ui-*` packages (first: `ui-photo-upload`) as plain custom
+elements with zero runtime dependencies. Each element ships its full UI —
+markup and styles — inside shadow DOM so app CSS cannot break it, and exposes
+customization through slots, reflected attributes, and CSS custom properties.
+Elements communicate outward only via composed, bubbling `CustomEvent`s (e.g.
+`photo-upload:files` with `detail: { files: File[] }`), which keeps them
+consumable from buildless apps today and forward-compatible with any future
+framework, which can wrap the element or listen to its events natively.
+`src/index.ts` registers the element with an idempotent
+`customElements.define` guard, so apps import the built module purely for the
+side effect. Element tests run under happy-dom (per-package
+`test.environment`).
 
 ### `cv` is an ambient global, not an import
 
