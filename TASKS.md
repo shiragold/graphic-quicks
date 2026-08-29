@@ -44,7 +44,7 @@ Mechanical, guarded by the 88 existing tests. No user-visible change. Baseline
 before starting: `pnpm lint && pnpm -r typecheck && pnpm -r test && pnpm -r build`
 all green, 88 tests.
 
-- [ ] **1.1 Root shared infra.** Create `tsconfig.base.json` (lift compilerOptions
+- [x] **1.1 Root shared infra.** Create `tsconfig.base.json` (lift compilerOptions
       from `packages/core/tsconfig.json`); make `core` extend it as a no-op
       refactor. Add root `vitest.config.ts` with `projects: ['packages/*']`; point
       the root `test` script at it.
