@@ -4,11 +4,18 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
+    "lint": "eslint .",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@10.18.3"
+  "packageManager": "pnpm@10.18.3",
+  "devDependencies": {
+    "eslint": "^10.8.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0"
+  }
 }
