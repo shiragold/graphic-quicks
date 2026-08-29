@@ -155,7 +155,7 @@ Pure moves; apps keep their duplicated logic for now.
 
 ## Phase 5 — Deploy
 
-- [ ] **5.1 Replace the Jekyll workflow** (`.github/workflows/deploy.yml`) with:
+- [x] **5.1 Replace the Jekyll workflow** (`.github/workflows/deploy.yml`) with:
       pnpm install → `pnpm -r build` → upload `apps/` + `packages/*/dist` as the
       Pages artifact (preserving the relative `../../packages/...` paths).
       *Verify:* artifact structure locally mirrors the repo layout the imports

@@ -1,19 +1,15 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Run on push to main branch
   push:
     branches: [ main ]
-  # Allow manual trigger
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -24,17 +20,62 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0  # Need full history for git log in gather_links.py
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm -r build
+
+      # The buildless apps import ../../packages/<tool>/dist/index.js, so the
+      # published site must mirror the repo layout: apps/ + packages/*/dist.
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          rsync -a --exclude node_modules apps _site/
+          for dist in packages/*/dist; do
+            mkdir -p "_site/$(dirname "$dist")"
+            rsync -a "$dist/" "_site/$dist/"
+          done
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>graphic-quicks</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; }
+              li { margin: 0.5rem 0; }
+            </style>
+          </head>
+          <body>
+            <h1>graphic-quicks</h1>
+            <ul>
+              <li><a href="apps/photo-edit/">Photo edit</a> — deskew and crop scanned photos</li>
+              <li><a href="apps/photo-collage/photo-collage.html">Photo collage</a> — layout and export collages</li>
+              <li><a href="apps/image-scale/">Image scale</a> — batch upscale images</li>
+            </ul>
+          </body>
+          </html>
+          HTML
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
 
   deploy:
     environment:
