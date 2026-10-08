@@ -1,19 +1,15 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Run on push to main branch
   push:
     branches: [ main ]
-  # Allow manual trigger
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -24,17 +20,54 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0  # Need full history for git log in gather_links.py
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build collage packages
+        run: pnpm --filter @graphic-quicks/collage --filter @graphic-quicks/ui-photo-upload build
+
+      # photo-collage/app.js imports ../../packages/<pkg>/dist/index.js, so the
+      # published tree keeps that relative layout. Only the collage and the two
+      # packages it loads are uploaded.
+      - name: Assemble site
+        run: |
+          mkdir -p _site/apps _site/packages/collage _site/packages/ui-photo-upload
+          rsync -a apps/photo-collage/ _site/apps/photo-collage/
+          rsync -a packages/collage/dist/ _site/packages/collage/dist/
+          rsync -a packages/ui-photo-upload/dist/ _site/packages/ui-photo-upload/dist/
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta http-equiv="refresh" content="0; url=apps/photo-collage/photo-collage.html">
+            <link rel="canonical" href="apps/photo-collage/photo-collage.html">
+            <title>Photo Collage Maker</title>
+          </head>
+          <body>
+            <p><a href="apps/photo-collage/photo-collage.html">Photo Collage Maker</a></p>
+          </body>
+          </html>
+          HTML
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
 
   deploy:
     environment:

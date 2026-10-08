@@ -1,0 +1,29 @@
+{
+  "name": "@graphic-quicks/ui-photo-upload",
+  "version": "0.1.0",
+  "description": "Zero-dependency <photo-upload> custom element: dropzone with click-to-browse, drag-and-drop, and a CustomEvent file contract.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.12.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

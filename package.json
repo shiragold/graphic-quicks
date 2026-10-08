@@ -1,0 +1,24 @@
+{
+  "name": "graphic-quicks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck",
+    "serve": "serve ."
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.18.3",
+  "devDependencies": {
+    "eslint": "^10.8.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "serve": "^14.2.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.9"
+  }
+}
