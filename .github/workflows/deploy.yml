@@ -33,38 +33,30 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm -r build
+      - name: Build collage packages
+        run: pnpm --filter @graphic-quicks/collage --filter @graphic-quicks/ui-photo-upload build
 
-      # The buildless apps import ../../packages/<tool>/dist/index.js, so the
-      # published site must mirror the repo layout: apps/ + packages/*/dist.
+      # photo-collage/app.js imports ../../packages/<pkg>/dist/index.js, so the
+      # published tree keeps that relative layout. Only the collage and the two
+      # packages it loads are uploaded.
       - name: Assemble site
         run: |
-          mkdir -p _site
-          rsync -a --exclude node_modules apps _site/
-          for dist in packages/*/dist; do
-            mkdir -p "_site/$(dirname "$dist")"
-            rsync -a "$dist/" "_site/$dist/"
-          done
+          mkdir -p _site/apps _site/packages/collage _site/packages/ui-photo-upload
+          rsync -a apps/photo-collage/ _site/apps/photo-collage/
+          rsync -a packages/collage/dist/ _site/packages/collage/dist/
+          rsync -a packages/ui-photo-upload/dist/ _site/packages/ui-photo-upload/dist/
           cat > _site/index.html <<'HTML'
           <!doctype html>
           <html lang="en">
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>graphic-quicks</title>
-            <style>
-              body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; }
-              li { margin: 0.5rem 0; }
-            </style>
+            <meta http-equiv="refresh" content="0; url=apps/photo-collage/photo-collage.html">
+            <link rel="canonical" href="apps/photo-collage/photo-collage.html">
+            <title>Photo Collage Maker</title>
           </head>
           <body>
-            <h1>graphic-quicks</h1>
-            <ul>
-              <li><a href="apps/photo-edit/">Photo edit</a> — deskew and crop scanned photos</li>
-              <li><a href="apps/photo-collage/photo-collage.html">Photo collage</a> — layout and export collages</li>
-              <li><a href="apps/image-scale/">Image scale</a> — batch upscale images</li>
-            </ul>
+            <p><a href="apps/photo-collage/photo-collage.html">Photo Collage Maker</a></p>
           </body>
           </html>
           HTML

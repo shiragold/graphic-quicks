@@ -56,9 +56,9 @@
             --photo-upload-background-active: #f0f2ff;
         }
 
-        photo-upload .upload-hint {
-            font-size: 12px;
-            color: #999;
+        photo-upload::part(hint) {
+            opacity: 1;
+            color: #444;
         }
 
         .controls {
@@ -314,7 +314,7 @@
         <photo-upload accept="image/*" multiple>
             <span slot="icon">📁</span>
             <span slot="label"><strong>Click to upload</strong> or drag and drop</span>
-            <span slot="hint" class="upload-hint">Select multiple images (PNG, JPG, WEBP)</span>
+            <span slot="hint">Select multiple images (PNG, JPG, WEBP)</span>
         </photo-upload>
 
         <div class="controls">
