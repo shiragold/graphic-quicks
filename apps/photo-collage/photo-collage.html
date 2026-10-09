@@ -57,8 +57,8 @@
 
       .layout {
         display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 48px;
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 32px;
         align-items: start;
       }
 
@@ -70,16 +70,37 @@
       }
 
       .left-col {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
         min-width: 0;
       }
       .left-col__toggle {
+        align-self: start;
         cursor: pointer;
+        font: inherit;
         font-size: 16px;
+        color: inherit;
+        background: none;
+        border: 0;
         padding: 8px 0;
-        margin-block-end: 24px;
+        margin: 0 0 24px;
+        text-align: start;
+        white-space: nowrap;
       }
-      .left-col:not([open]) .left-col__toggle {
-        margin-block-end: 0;
+      .left-col__toggle::after {
+        content: " ‹";
+      }
+      .left-col.is-collapsed .left-col__toggle {
+        writing-mode: vertical-rl;
+        margin: 0;
+        padding: 12px 8px;
+      }
+      .left-col.is-collapsed .left-col__toggle::after {
+        content: " ›";
+      }
+      .left-col.is-collapsed .left-col__body {
+        display: none;
       }
       .left-col__body {
         display: flex;
@@ -87,11 +108,8 @@
         gap: 40px;
       }
 
-      .layout:has(.left-col:not([open])) {
-        grid-template-columns: 1fr;
-      }
-      .layout:has(.left-col:not([open])) .col-right {
-        grid-column: 1;
+      .layout:has(.left-col.is-collapsed) {
+        grid-template-columns: auto minmax(0, 1fr);
       }
 
       .col-right {
@@ -188,6 +206,9 @@
         gap: 8px;
         font-size: 14px;
       }
+      .field[hidden] {
+        display: none;
+      }
       .field input[type="number"] {
         width: 80px;
       }
@@ -224,11 +245,11 @@
 
       @media (max-width: 900px) {
         .layout {
-          grid-template-columns: 1fr;
-          gap: 32px;
+          grid-template-columns: 240px minmax(0, 1fr);
+          gap: 24px;
         }
-        .col-right {
-          position: static;
+        .layout:has(.left-col.is-collapsed) {
+          grid-template-columns: auto minmax(0, 1fr);
         }
       }
 
@@ -261,9 +282,17 @@
     </header>
 
     <main class="layout">
-      <details class="left-col" open>
-        <summary class="left-col__toggle">Controls</summary>
-        <div class="left-col__body">
+      <div class="left-col" id="controlsCol">
+        <button
+          type="button"
+          class="left-col__toggle"
+          id="controlsToggle"
+          aria-expanded="true"
+          aria-controls="controlsBody"
+        >
+          Controls
+        </button>
+        <div class="left-col__body" id="controlsBody">
         <section aria-labelledby="upload-heading">
           <h2 id="upload-heading">Add photos</h2>
           <photo-upload id="uploadArea" accept="image/*" multiple>
@@ -327,12 +356,12 @@
                   <option value="columns">Masonry</option>
                   <option value="hero-grid">Hero + grid</option>
                   <option value="mosaic">Mosaic</option>
-                  <option value="polaroid">Polaroid scatter</option>
+                  <option value="polaroid">Polaroid</option>
                   <option value="row">One row</option>
                   <option value="column">One column</option>
                 </select>
               </label>
-              <label class="field" id="columnsField">
+              <label class="field" id="columnsField" hidden>
                 <span>Columns</span>
                 <input
                   type="number"
@@ -343,7 +372,7 @@
                   step="1"
                 />
               </label>
-              <label class="field" id="heroPosField">
+              <label class="field" id="heroPosField" hidden>
                 <span>Hero position</span>
                 <select id="heroPos">
                   <option value="start">Start</option>
@@ -373,7 +402,7 @@
           </form>
         </section>
         </div>
-      </details>
+      </div>
 
       <section class="col-right" aria-labelledby="preview-heading">
         <header class="preview-header">

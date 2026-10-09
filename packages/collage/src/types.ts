@@ -23,6 +23,8 @@ export interface Rect {
  */
 export interface PolaroidPlacement {
   rotation: number;
+  /** Paint order. Higher values are drawn later, so they sit on top. */
+  z: number;
   polaroid: {
     borderSide: number;
     borderBottom: number;
