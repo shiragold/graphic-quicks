@@ -5,6 +5,7 @@ import {
 import "../../packages/ui-photo-upload/dist/index.js";
 
 const photos = [];
+let polaroidSeed = Math.floor(Math.random() * 0x100000000);
 
 const $ = (id) => document.getElementById(id);
 const uploadArea = $("uploadArea");
@@ -229,8 +230,11 @@ function render() {
     gap: s.gap,
     padding: s.padding,
     heroPos: s.heroPos,
+    polaroidSeed,
   });
-  for (let i = 0; i < photos.length; i++) {
+  const order = rects.map((_, i) => i);
+  order.sort((a, b) => (rects[a]?.z ?? a) - (rects[b]?.z ?? b));
+  for (const i of order) {
     const r = rects[i];
     if (!r) continue;
     if (r.polaroid) {
@@ -281,11 +285,9 @@ uploadArea.addEventListener("photo-upload:files", (e) => {
     render();
   });
 });
-["outWidth", "outHeight", "layout", "columns", "bgColor", "heroPos"].forEach(
-  (k) => {
-    controls[k].addEventListener("change", render);
-  },
-);
+["outWidth", "outHeight", "columns", "bgColor", "heroPos"].forEach((k) => {
+  controls[k].addEventListener("change", render);
+});
 
 // Show layout-specific fields only when relevant.
 const columnsField = $("columnsField");
@@ -296,7 +298,20 @@ function updateLayoutFieldsVisibility() {
   columnsField.hidden = !LAYOUTS_WITH_COLUMNS.has(layout);
   heroPosField.hidden = layout !== "hero-grid";
 }
-controls.layout.addEventListener("change", updateLayoutFieldsVisibility);
+controls.layout.addEventListener("change", () => {
+  if (controls.layout.value === "polaroid") {
+    polaroidSeed = Math.floor(Math.random() * 0x100000000);
+  }
+  updateLayoutFieldsVisibility();
+  render();
+});
+
+const controlsCol = $("controlsCol");
+const controlsToggle = $("controlsToggle");
+controlsToggle.addEventListener("click", () => {
+  const collapsed = controlsCol.classList.toggle("is-collapsed");
+  controlsToggle.setAttribute("aria-expanded", String(!collapsed));
+});
 
 // Ratio preset buttons
 document.querySelectorAll(".preset-btns button").forEach((btn) => {

@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import {
-  polaroid,
-  type InnerRegion,
-} from '../src/index.js';
+import { polaroid, type InnerRegion, type PolaroidPlacement } from '../src/index.js';
 
-const REGION: InnerRegion = { x: 0, y: 0, w: 1000, h: 800, gap: 0 };
+const REGION: InnerRegion = { x: 0, y: 0, w: 1000, h: 800, gap: 12 };
+const MAX_ROT = (4 * Math.PI) / 180;
+
+function corners(p: PolaroidPlacement): Array<[number, number]> {
+  const { cx, cy, frameW, frameH } = p.polaroid;
+  const cos = Math.cos(p.rotation);
+  const sin = Math.sin(p.rotation);
+  const dx = frameW / 2;
+  const dy = frameH / 2;
+  return [
+    [-dx, -dy],
+    [dx, -dy],
+    [dx, dy],
+    [-dx, dy],
+  ].map(([x, y]) => [cx + x * cos - y * sin, cy + x * sin + y * cos]);
+}
 
 describe('polaroid', () => {
   it('empty aspects returns []', () => {
@@ -17,23 +29,51 @@ describe('polaroid', () => {
     expect(out).toHaveLength(aspects.length);
   });
 
-  it('every placement has a positive frame size and finite rotation', () => {
-    const aspects = [1, 1.5, 0.75, 2, 0.5];
-    const out = polaroid(aspects, REGION);
+  it('overlaps neighbors by a few pixels without covering the photos', () => {
+    const out = polaroid([1, 1, 1, 1], REGION, 2);
+    const { frameW, frameH, borderSide } = out[0].polaroid;
+    const photoW = frameW - 2 * borderSide;
+    const photoH = frameH - borderSide - out[0].polaroid.borderBottom;
+
+    for (const pair of [
+      [0, 1],
+      [2, 3],
+    ] as const) {
+      const dx = Math.abs(out[pair[1]].polaroid.cx - out[pair[0]].polaroid.cx);
+      const overlap = frameW - dx;
+      expect(overlap).toBeGreaterThan(0);
+      expect(overlap).toBeLessThanOrEqual(8 + 4 + 4);
+      expect(dx).toBeGreaterThan(photoW);
+    }
+    for (const pair of [
+      [0, 2],
+      [1, 3],
+    ] as const) {
+      const dy = Math.abs(out[pair[1]].polaroid.cy - out[pair[0]].polaroid.cy);
+      const overlap = frameH - dy;
+      expect(overlap).toBeGreaterThan(0);
+      expect(overlap).toBeLessThanOrEqual(8 + 4 + 4);
+      expect(dy).toBeGreaterThan(photoH);
+    }
+  });
+
+  it('keeps every tilted card inside the region', () => {
+    const aspects = [1, 1.5, 0.75, 2, 0.5, 1.2];
+    const out = polaroid(aspects, REGION, 3);
     for (const p of out) {
-      expect(p.polaroid.frameW).toBeGreaterThan(0);
-      expect(p.polaroid.frameH).toBeGreaterThan(0);
-      expect(Number.isFinite(p.rotation)).toBe(true);
-      // Rotation magnitude cap: 12deg = 12*PI/180 rad.
-      expect(Math.abs(p.rotation)).toBeLessThanOrEqual((12 * Math.PI) / 180);
+      expect(Math.abs(p.rotation)).toBeLessThanOrEqual(MAX_ROT + 1e-9);
+      for (const [x, y] of corners(p)) {
+        expect(x).toBeGreaterThanOrEqual(REGION.x - 1e-6);
+        expect(x).toBeLessThanOrEqual(REGION.x + REGION.w + 1e-6);
+        expect(y).toBeGreaterThanOrEqual(REGION.y - 1e-6);
+        expect(y).toBeLessThanOrEqual(REGION.y + REGION.h + 1e-6);
+      }
     }
   });
 
   it('is deterministic: same input + same seed => byte-identical output', () => {
     const aspects = [1, 1.5, 0.75, 2, 0.5];
-    const a = polaroid(aspects, REGION, 0);
-    const b = polaroid(aspects, REGION, 0);
-    expect(b).toEqual(a);
+    expect(polaroid(aspects, REGION, 0)).toEqual(polaroid(aspects, REGION, 0));
   });
 
   it('default seed matches explicit seed=0', () => {
@@ -41,49 +81,18 @@ describe('polaroid', () => {
     expect(polaroid(aspects, REGION)).toEqual(polaroid(aspects, REGION, 0));
   });
 
-  it('different seeds yield different placements', () => {
-    const aspects = [1, 1.5, 0.75];
+  it('different seeds change the arrangement', () => {
+    const aspects = [1, 1, 1, 1];
     const a = polaroid(aspects, REGION, 0);
     const b = polaroid(aspects, REGION, 7);
-    // cx values should differ between the two seeds for at least one photo.
-    let differs = false;
-    for (let i = 0; i < aspects.length; i++) {
-      if (a[i].polaroid.cx !== b[i].polaroid.cx) {
-        differs = true;
-        break;
-      }
-    }
-    expect(differs).toBe(true);
-  });
-
-  it('at seed=0 reproduces the source PRNG exactly for i=0', () => {
-    // The source's fixed formula (byte-identical):
-    //   cx = innerX + margin + rand(i*2 + 1) * (innerW - 2*margin);
-    //   cy = innerY + margin + rand(i*2 + 2) * (innerH - 2*margin);
-    //   rotation = (rand(i*2 + 3) * 2 - 1) * maxRot;
-    // where rand(seed) = frac(sin(seed*9301 + 49297) * 233280).
-    const rand = (seed: number): number => {
-      const x = Math.sin(seed * 9301 + 49297) * 233280;
-      return x - Math.floor(x);
-    };
-    const aspects = [1.25];
-    const [p] = polaroid(aspects, REGION, 0);
-    const targetW = Math.sqrt((REGION.w * REGION.h) / 1) * 1.2;
-    const borderSide = targetW * 0.06;
-    const borderBottom = targetW * 0.22;
-    const maxRot = (12 * Math.PI) / 180;
-    const frameW = targetW + 2 * borderSide;
-    const frameH = targetW / 1.25 + borderSide + borderBottom;
-    const margin = Math.min(frameW, frameH) * 0.3;
-    const expectedCx = REGION.x + margin + rand(1) * (REGION.w - 2 * margin);
-    const expectedCy = REGION.y + margin + rand(2) * (REGION.h - 2 * margin);
-    const expectedRot = (rand(3) * 2 - 1) * maxRot;
-    expect(p.polaroid.cx).toBeCloseTo(expectedCx, 10);
-    expect(p.polaroid.cy).toBeCloseTo(expectedCy, 10);
-    expect(p.rotation).toBeCloseTo(expectedRot, 10);
-    expect(p.polaroid.frameW).toBeCloseTo(frameW, 10);
-    expect(p.polaroid.frameH).toBeCloseTo(frameH, 10);
-    expect(p.polaroid.borderSide).toBeCloseTo(borderSide, 10);
-    expect(p.polaroid.borderBottom).toBeCloseTo(borderBottom, 10);
+    const moved = a.some(
+      (p, i) =>
+        p.polaroid.cx !== b[i].polaroid.cx ||
+        p.polaroid.cy !== b[i].polaroid.cy ||
+        p.rotation !== b[i].rotation,
+    );
+    const restacked = a.some((p, i) => p.z !== b[i].z);
+    expect(moved).toBe(true);
+    expect(restacked).toBe(true);
   });
 });
