@@ -1,0 +1,6 @@
+{
+  "name": "photo-collage",
+  "private": true,
+  "description": "Buildless photo-collage mini-app.",
+  "type": "module"
+}

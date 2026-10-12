@@ -80,27 +80,36 @@
 </main>
 
 <script type="module">
-  import { processMat } from '../../packages/photo-edit/dist/index.js';
+  import { paddedRect, processMat } from '../../packages/photo-edit/dist/index.js';
   import '../../packages/ui-photo-upload/dist/index.js';
 
   // OpenCV.js loader -----------------------------------------------------
+  // Same @techstark/opencv-js 5.x build the package tests require. Its UMD
+  // factory assigns a Promise to globalThis.cv and resolves once WASM is ready.
   const statusEl = document.getElementById('status');
   let cvReady = false;
   let pendingFile = null;
 
-  // Module-scope functions aren't attached to window in a `type="module"`
-  // script, so publish the two callbacks referenced from HTML explicitly.
-  window.Module = {
-    onRuntimeInitialized() {
+  function markCvFailed() {
+    statusEl.textContent = 'Failed to load OpenCV.js. Run pnpm install from the repo root and reload.';
+    statusEl.setAttribute('role', 'alert');
+  }
+
+  const opencv = document.createElement('script');
+  opencv.src = new URL('./node_modules/@techstark/opencv-js/dist/opencv.js', import.meta.url).href;
+  opencv.onload = () => {
+    Promise.resolve(globalThis.cv).then((ready) => {
+      globalThis.cv = ready;
       cvReady = true;
       statusEl.textContent = 'Ready. Choose a photo.';
       if (pendingFile) { handleFile(pendingFile); pendingFile = null; }
-    },
+    }).catch((err) => {
+      console.error(err);
+      markCvFailed();
+    });
   };
-  window.onCvLoadError = function onCvLoadError() {
-    statusEl.textContent = 'Failed to load OpenCV.js. Check your connection and reload.';
-    statusEl.setAttribute('role', 'alert');
-  };
+  opencv.onerror = markCvFailed;
+  document.head.appendChild(opencv);
 
   // File handling --------------------------------------------------------
   document.getElementById('upload').addEventListener('photo-upload:files', (e) => {
@@ -173,15 +182,10 @@
           drawMatToCanvas(rotated, 'canvas-2', 'dl-2');
         }
 
-        // 4. Deskewed + padded (~2% on each side)
+        // 4. Deskewed + padded
         if (bboxRotated) {
-          const padX = Math.round(bboxRotated.width * 0.02);
-          const padY = Math.round(bboxRotated.height * 0.02);
-          const px = Math.max(0, bboxRotated.x - padX);
-          const py = Math.max(0, bboxRotated.y - padY);
-          const pw = Math.min(rotated.cols - px, bboxRotated.width + 2 * padX);
-          const ph = Math.min(rotated.rows - py, bboxRotated.height + 2 * padY);
-          const padded = rotated.roi(new cv.Rect(px, py, pw, ph));
+          const pad = paddedRect(bboxRotated, rotated.cols, rotated.rows);
+          const padded = rotated.roi(new cv.Rect(pad.x, pad.y, pad.width, pad.height));
           drawMatToCanvas(padded, 'canvas-3', 'dl-3');
           padded.delete();
         } else {
@@ -220,6 +224,5 @@
     }
   }
 </script>
-<script async src="https://docs.opencv.org/4.x/opencv.js" onerror="onCvLoadError()"></script>
 </body>
 </html>

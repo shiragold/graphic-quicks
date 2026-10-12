@@ -1,5 +1,5 @@
 import type { Mat, CV } from '@techstark/opencv-js';
-import type { RGB } from '../src/index.js';
+import { paddedSize, type RGB } from '../src/index.js';
 
 // `cv` resolves to `globalThis.cv`, which tests/setup.ts populates before any
 // test runs.
@@ -142,10 +142,7 @@ export function makePhoto(opts: FixtureOptions = {}): Fixture {
     height: photoH,
   };
 
-  const padX = Math.round(photoW * 0.02);
-  const padY = Math.round(photoH * 0.02);
-  const padW = photoW + 2 * padX;
-  const padH = photoH + 2 * padY;
+  const { width: padW, height: padH } = paddedSize(photoW, photoH);
   const deskewedPadded: RawImage = {
     rgba: renderScene(
       padW, padH, padW / 2, padH / 2, photoW, photoH, 0, photoColor, bgColor,

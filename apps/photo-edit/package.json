@@ -1,5 +1,9 @@
 {
   "name": "photo-edit",
   "private": true,
-  "type": "module"
+  "description": "Buildless photo-edit mini-app.",
+  "type": "module",
+  "dependencies": {
+    "@techstark/opencv-js": "^5.0.0-release.1"
+  }
 }
