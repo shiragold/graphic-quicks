@@ -16,15 +16,15 @@ There is no umbrella package; `@graphic-quicks/core` was dissolved.
   pnpm-workspace.yaml              # globs packages/* and apps/*
   package.json                     # workspace root (private)
   tsconfig.base.json               # shared compilerOptions; packages extend it
-  vitest.config.ts                 # projects: packages/* + apps/*/vitest.config.ts
+  vitest.config.ts                 # projects: packages/*
   eslint.config.js
   apps/
-    photo-edit/                    # mini-app with its own test suite (in the workspace)
-    photo-collage/                 # static photo-collage.html
-    image-scale/                   # static index.html
+    photo-edit/                    # static index.html; private workspace package
+    photo-collage/                 # static photo-collage.html; private workspace package
+    image-scale/                   # static index.html; private workspace package
   packages/
     photo-edit/                    # @graphic-quicks/photo-edit
-      src/                         # 5 pure OpenCV functions
+      src/                         # pure OpenCV helpers + padded-rect crop math
       tests/                       # unit + pipeline tests, PNG fixtures
         setup.ts                   # awaits opencv-js Promise, sets globalThis.cv
     collage/                       # @graphic-quicks/collage
@@ -50,8 +50,8 @@ Run from the repo root. Node >= 22, pnpm 10.
 ```sh
 pnpm install
 pnpm lint                          # eslint across the repo
-pnpm -r typecheck                  # tsc --noEmit in each package + the photo-edit app
-pnpm test                          # root vitest projects run — packages + app suites (108 tests)
+pnpm -r typecheck                  # tsc --noEmit in each package (apps have no typecheck script)
+pnpm test                          # package suites only (111 tests)
 pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + maps)
 ```
 
@@ -72,8 +72,15 @@ pnpm serve      # static server at the repo root
 # then open http://localhost:3000/apps/photo-edit/ etc.
 ```
 
-`apps/photo-edit` is a workspace project (the `apps/*` glob), so its test
-suite runs under the root `pnpm test` alongside the packages.
+All three apps are private workspace packages (`apps/*/package.json`) with no
+build, test, or typecheck scripts. `pnpm -r build` and `pnpm -r typecheck`
+therefore run only in `packages/*`. Tests live with the packages; root
+`pnpm test` does not run an app suite.
+
+`pnpm serve` can open every app. GitHub Pages publishes the collage app only
+(`.github/workflows/deploy.yml` builds `@graphic-quicks/collage` and
+`@graphic-quicks/ui-photo-upload`, then uploads those dists plus
+`apps/photo-collage`). A combined studio shell is not part of this repo.
 
 ## ADR
 
@@ -118,9 +125,11 @@ side effect. Element tests run under happy-dom (per-package
 
 `packages/photo-edit`'s modules declare `declare const cv: CV` and reference
 `cv` as a free identifier, matching the original `photo-edit.js` design.
-`@techstark/opencv-js` is an **optional** peer dependency. Consumers must set
+`@techstark/opencv-js` 5.x is an **optional** peer dependency. Consumers must set
 `globalThis.cv` and await runtime initialization before calling any photo-edit
-function — either via a browser `<script>` build or a Node `require`.
+function. The photo-edit app loads that same package from its own
+`node_modules` (a classic script whose factory Promise resolves to `cv`). Tests
+`require` the package under Node. Do not swap in the docs.opencv.org 4.x build.
 
 ### Tests load opencv-js via `createRequire` inside `beforeAll`
 

@@ -1,0 +1,6 @@
+{
+  "name": "image-scale",
+  "private": true,
+  "description": "Buildless image-scale mini-app.",
+  "type": "module"
+}

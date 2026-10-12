@@ -12,6 +12,7 @@ import {
   detectSkewAngle,
   detectPhotoBBox,
   processMat,
+  paddedRect,
 } from '../src/index.js';
 
 declare const cv: CV;
@@ -94,13 +95,11 @@ function runPipelineAndCompare(fx: Fixture): PipelineComparison {
     let dePadded = matToRawImage(out.rotated);
     if (out.bboxRotated) {
       deTight = matToRawImage(out.rotated, out.bboxRotated);
-      const padX = Math.round(out.bboxRotated.width * 0.02);
-      const padY = Math.round(out.bboxRotated.height * 0.02);
-      const px = Math.max(0, out.bboxRotated.x - padX);
-      const py = Math.max(0, out.bboxRotated.y - padY);
-      const pw = Math.min(out.rotated.cols - px, out.bboxRotated.width + 2 * padX);
-      const ph = Math.min(out.rotated.rows - py, out.bboxRotated.height + 2 * padY);
-      dePadded = matToRawImage(out.rotated, { x: px, y: py, width: pw, height: ph });
+      dePadded = matToRawImage(out.rotated, paddedRect(
+        out.bboxRotated,
+        out.rotated.cols,
+        out.rotated.rows,
+      ));
     }
     return {
       theta: out.theta,

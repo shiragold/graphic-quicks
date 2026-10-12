@@ -4,3 +4,5 @@ export { detectSkewAngle } from './detect-skew-angle.js';
 export { rotateImage } from './rotate-image.js';
 export { detectPhotoBBox } from './detect-photo-bbox.js';
 export { processMat } from './process-mat.js';
+export { PAD_RATIO, paddedRect, paddedSize } from './padded-rect.js';
+export type { PaddedRect } from './padded-rect.js';

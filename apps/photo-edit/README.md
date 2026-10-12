@@ -12,15 +12,16 @@ it from a local server rather than `file://`. Build the package first, then
 serve the repo root:
 
 ```bash
-pnpm --filter @graphic-quicks/photo-edit build
+pnpm install
+pnpm -r build
 pnpm serve
 # open http://localhost:3000/apps/photo-edit/
 ```
 
-OpenCV.js is loaded from the CDN by a classic `<script>` tag in
-`index.html`; the app waits for `Module.onRuntimeInitialized` before calling
-any package function, which is when the ambient `cv` global the package
-relies on becomes available.
+OpenCV.js is the same `@techstark/opencv-js` 5.x package the tests use.
+`index.html` loads `node_modules/@techstark/opencv-js/dist/opencv.js` (installed
+with the app) and waits for that build's factory Promise before calling any
+package function. That Promise is when the ambient `cv` global becomes available.
 
 ## Tests
 

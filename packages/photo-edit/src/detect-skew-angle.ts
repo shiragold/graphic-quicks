@@ -2,7 +2,7 @@ import type { Mat, CV } from '@techstark/opencv-js';
 
 // `cv` is a free identifier at runtime — it resolves to `globalThis.cv`, which
 // callers must set to the initialized OpenCV.js module before calling us.
-// See src/photo-edit/README.md (or the top-level README) for the init pattern.
+// See apps/photo-edit/README.md for the init pattern.
 declare const cv: CV;
 
 export function detectSkewAngle(src: Mat): number {
