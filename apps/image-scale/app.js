@@ -1,12 +1,9 @@
 import {
     computeScaledSize,
+    assertWithinCanvasLimits,
     SUPPORTED_SCALE_FACTORS,
 } from '../../packages/scale/dist/index.js';
 import '../../packages/ui-photo-upload/dist/index.js';
-
-// Browser canvas limits: exceeding them silently produces a blank canvas.
-const MAX_CANVAS_DIMENSION = 16384;
-const MAX_CANVAS_AREA = 268435456; // 16384 * 16384
 
 const SCALE_LABELS = { 2: 'Double', 3: 'Triple', 4: 'Quadruple', 8: 'Extreme' };
 
@@ -249,16 +246,7 @@ function upscaleImage(imageObj, factor) {
         factor
     );
 
-    if (width > MAX_CANVAS_DIMENSION || height > MAX_CANVAS_DIMENSION) {
-        throw new RangeError(
-            `Target size ${width} × ${height}px exceeds the ${MAX_CANVAS_DIMENSION}px canvas dimension limit`
-        );
-    }
-    if (width * height > MAX_CANVAS_AREA) {
-        throw new RangeError(
-            `Target area ${width} × ${height}px exceeds the browser canvas area limit`
-        );
-    }
+    assertWithinCanvasLimits({ width, height });
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');

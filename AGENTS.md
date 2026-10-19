@@ -31,7 +31,7 @@ There is no umbrella package; `@graphic-quicks/core` was dissolved.
       src/                         # layout math + EXIF, mosaic-templates.ts
       tests/                       # per-layout tests + EXIF golden
     scale/                         # @graphic-quicks/scale
-      src/                         # computeScaledSize
+      src/                         # computeScaledSize + canvas-limit validation
       tests/                       # unit tests
     ui-photo-upload/               # @graphic-quicks/ui-photo-upload
       src/                         # <photo-upload> custom element
@@ -51,7 +51,7 @@ Run from the repo root. Node >= 22, pnpm 10.
 pnpm install
 pnpm lint                          # eslint across the repo
 pnpm -r typecheck                  # tsc --noEmit in each package (apps have no typecheck script)
-pnpm test                          # package suites only (111 tests)
+pnpm test                          # package suites only (123 tests)
 pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + maps)
 ```
 
@@ -95,9 +95,11 @@ lint rule. This is what keeps buildless apps from over-downloading.
 
 Canvas 2D drawing (`drawCover`, `roundedRectPath`, `drawPolaroid`), file
 loading, upload UI, and DOM event handlers were deliberately left in the
-mini-apps. `image-scale`'s Canvas resampling is likewise not ported — only
-`computeScaledSize` and `SUPPORTED_SCALE_FACTORS` are. Layout functions return
-positioned rectangles and leave rendering to the caller.
+mini-apps. `image-scale`'s Canvas resampling is likewise not ported — the
+package ships `computeScaledSize`, `SUPPORTED_SCALE_FACTORS`, and the pure
+canvas-limit validation (`assertWithinCanvasLimits`, `MAX_CANVAS_DIMENSION`,
+`MAX_CANVAS_AREA`); the `drawImage` call stays in the app. Layout functions
+return positioned rectangles and leave rendering to the caller.
 
 ### The apps are consumers of the packages
 
