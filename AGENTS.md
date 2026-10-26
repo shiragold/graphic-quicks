@@ -9,6 +9,10 @@ the pure graphic-tool functions extracted from them:
 Canvas dependencies and each ships ESM with a single `"."` export → `dist/`.
 There is no umbrella package; `@graphic-quicks/core` was dissolved.
 
+`@graphic-quicks/photo-filter` is the Node-only exception: it reads the macOS
+Photos library (via osxphotos) and ships a library, a `photo-filter` CLI, and a
+`photo-filter-mcp` MCP server so agents can browse, view, and export photos.
+
 ## Structure
 
 ```
@@ -36,6 +40,13 @@ There is no umbrella package; `@graphic-quicks/core` was dissolved.
     ui-photo-upload/               # @graphic-quicks/ui-photo-upload
       src/                         # <photo-upload> custom element
       tests/                       # element contract tests (happy-dom)
+    photo-filter/                  # @graphic-quicks/photo-filter (Node, macOS)
+      src/                         # osxphotos wrapper, cli.ts, mcp.ts + server.ts
+        curate/                    # deterministic curate pipeline + model adapter
+      tests/                       # fake runner/model/images; MCP in-memory tests
+  .cursor/
+    mcp.json                       # registers photo-filter-mcp for Cursor
+    skills/select-best-photos/     # agent workflow on top of the MCP tools
 ```
 
 Each package carries the same wiring: `package.json`, `tsconfig.json` (editor +
@@ -51,7 +62,7 @@ Run from the repo root. Node >= 22, pnpm 10.
 pnpm install
 pnpm lint                          # eslint across the repo
 pnpm -r typecheck                  # tsc --noEmit in each package (apps have no typecheck script)
-pnpm test                          # package suites only (123 tests)
+pnpm test                          # package suites only (161 tests)
 pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + maps)
 ```
 
@@ -92,6 +103,10 @@ between tools are structural — separate packages — rather than enforced by a
 lint rule. This is what keeps buildless apps from over-downloading.
 
 ### Only pure, framework-agnostic code lives in the packages
+
+Packages are not required to run in the browser — `photo-filter` is
+Node-only — but they stay free of app UI. The tool packages the apps import
+remain DOM- and Canvas-free; shared UI goes in `ui-*` packages.
 
 Canvas 2D drawing (`drawCover`, `roundedRectPath`, `drawPolaroid`), file
 loading, upload UI, and DOM event handlers were deliberately left in the
@@ -156,3 +171,48 @@ is test-only; the library itself does not depend on it.
 `packages/collage/src/mosaic-templates.ts` is a 1:1 copy of the hand-tuned
 template tables from the original collage app. Treat it as data, not code to
 refactor.
+
+### photo-filter: one core, CLI and MCP on top, osxphotos underneath
+
+`createPhotoLibrary()` is the single core; `cli.ts` and `server.ts` (MCP
+tools `list_albums`, `query_photos`, `get_thumbnails`, `export_photos`) are
+thin adapters over it. A future HTTP `serve` mode for the browser apps should
+be a third adapter, not a second implementation.
+
+Reads go through the osxphotos CLI (spawned as `PHOTO_FILTER_OSXPHOTOS`,
+default `osxphotos`; `.cursor/mcp.json` uses `uvx --python 3.12 osxphotos`
+because macOS's Python 3.9 is too old). It reads the Photos SQLite DB
+directly, so the host process needs Full Disk Access. The package never
+writes to the library — only export copies files out. Thumbnails are the
+largest Photos-generated derivative resized with `sips`, returned to agents
+as MCP image content so they can judge photos visually.
+
+All process spawning goes through an injectable `CommandRunner`; tests use
+`tests/fake-runner.ts`, so the suite runs on Linux CI without osxphotos.
+
+### photo-filter `curate`: code orchestrates, Jev only judges
+
+`photo-filter curate` (`src/curate/`) is a fixed pipeline: one library
+query, events split by time gap, a per-photo decision call (subject /
+special-moment / quality), near-duplicate knockout via dHash + Jev choice,
+then a code-built event spread (~20 picks per 30 days of the range, override
+with `--count`) filled by Jev comparing each event's top candidates. Code
+owns all control flow; answers are typed probabilities (noul / choice /
+score), not free text. Special moments include parents, places, presents,
+and celebrations/performances (school shows, holidays, birthdays).
+
+The model sits behind `DecisionModel` (OpenRouter Decisions API, default
+`typesafe/jev-1.14`, `OPENROUTER_API_KEY`, override `PHOTO_FILTER_DECISION_MODEL`
+or `--model`); images go through `ImageTools` (sharp) and are resized to
+Jev's 320–1568 px side limits. Both are injectable, so
+`tests/decision-pipeline.test.ts` and related suites run with fakes. The
+older Anthropic `VisionModel` path (`pipeline.ts`, `anthropic.ts`) remains
+in the package but is not used by the CLI.
+
+`CurationContext` (default `~/.photo-filter/context/<album>--<brief>.json`)
+caches decision verdicts keyed by uuid + `model.id` +
+`DECISION_PROMPT_VERSION`; prior picks and review feedback steer later
+runs. Bump `DECISION_PROMPT_VERSION` whenever questions or scoring change.
+
+The `select-best-photos` skill prefers `curate` for whole requests and
+falls back to the MCP tools for interactive browsing.
