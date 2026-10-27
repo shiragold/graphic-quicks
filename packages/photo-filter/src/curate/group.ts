@@ -47,7 +47,10 @@ export interface DuplicateOptions {
 
 /**
  * Groups near-duplicates: shots in the same burst, or visually similar shots
- * taken close together. Returns uuid groups in capture order; singletons included.
+ * taken close together. A group never spans more than `windowSeconds`, so a long
+ * run of pairwise-similar shots (a show filmed from one seat) splits into several
+ * groups instead of chaining into one. Returns uuid groups in capture order;
+ * singletons included.
  */
 export function groupNearDuplicates(
   photos: PhotoSummary[],
@@ -57,6 +60,9 @@ export function groupNearDuplicates(
   const sorted = [...photos].sort((a, b) => time(a) - time(b));
   const parent = sorted.map((_, i) => i);
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  // Capture-time span of each root's group, in ms.
+  const first = sorted.map(time);
+  const last = sorted.map(time);
 
   for (let i = 0; i < sorted.length; i++) {
     for (let j = i + 1; j < sorted.length; j++) {
@@ -65,7 +71,16 @@ export function groupNearDuplicates(
       const a = hashes.get(sorted[i].uuid);
       const b = hashes.get(sorted[j].uuid);
       const similar = a !== undefined && b !== undefined && hamming(a, b) <= maxDistance;
-      if (dt <= burstSeconds || similar) parent[find(j)] = find(i);
+      if (!(dt <= burstSeconds || similar)) continue;
+      const ri = find(i);
+      const rj = find(j);
+      if (ri === rj) continue;
+      const start = Math.min(first[ri], first[rj]);
+      const end = Math.max(last[ri], last[rj]);
+      if (end - start > windowSeconds * 1000) continue;
+      parent[rj] = ri;
+      first[ri] = start;
+      last[ri] = end;
     }
   }
 

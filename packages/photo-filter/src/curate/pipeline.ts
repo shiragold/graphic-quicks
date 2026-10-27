@@ -93,8 +93,41 @@ export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i:
   return out;
 }
 
-const previewSource = (p: PhotoSummary) =>
-  p.previewPath ?? (p.path && /\.(jpe?g|png)$/i.test(p.path) ? p.path : null);
+/**
+ * The file to show a model for a photo: a local original JPEG/PNG or the
+ * Photos preview, in the order `preferOriginal` selects; null when neither is local.
+ */
+export function previewSource(p: PhotoSummary, preferOriginal = false): string | null {
+  const original = p.path && /\.(jpe?g|png)$/i.test(p.path) ? p.path : null;
+  return (preferOriginal ? (original ?? p.previewPath) : (p.previewPath ?? original)) ?? null;
+}
+
+/**
+ * Resolves the brief's subjects and their reference photos (explicit refs, then
+ * refs saved in the context, then top-scored People-tagged photos) and stores them
+ * in `ctx.subjects`. Returns every reference photo with its subject's name.
+ */
+export async function resolveSubjects(
+  lib: PhotoLibrary,
+  ctx: CurationContext,
+  requested: { name: string; refs?: string[] }[] | undefined,
+  log: (message: string) => void,
+): Promise<{ name: string; photo: PhotoSummary }[]> {
+  const subjects: Subject[] = [];
+  for (const s of requested ?? []) {
+    const saved = ctx.subjects.find((c) => c.name === s.name);
+    let refs = s.refs?.length ? s.refs : (saved?.refs ?? []);
+    if (!refs.length) {
+      refs = (await lib.queryPhotos({ person: [s.name], sort: 'score', limit: 3 })).map((p) => p.uuid);
+      if (!refs.length) log(`no People-tagged photos of ${s.name}; pass --ref ${s.name}=UUID for better recognition`);
+    }
+    subjects.push({ name: s.name, refs });
+  }
+  if (subjects.length) ctx.subjects = subjects;
+  const refUuids = ctx.subjects.flatMap((s) => s.refs.map((uuid) => ({ name: s.name, uuid })));
+  const refPhotos = refUuids.length ? await lib.getPhotos(refUuids.map((r) => r.uuid)) : [];
+  return refPhotos.map((photo, i) => ({ name: refUuids[i].name, photo }));
+}
 
 const time = (iso: string) => Date.parse(iso) || 0;
 
@@ -145,24 +178,12 @@ export async function curatePhotos(deps: CurateDeps, opts: CurateOptions): Promi
   log(`${album.name}: ${queried.length} photos in range${skipped.length ? `, ${skipped.length} iCloud-only skipped` : ''}`);
 
   // 2. Subjects and their reference images.
-  const subjects: Subject[] = [];
-  for (const s of opts.subjects ?? []) {
-    const saved = ctx.subjects.find((c) => c.name === s.name);
-    let refs = s.refs?.length ? s.refs : (saved?.refs ?? []);
-    if (!refs.length) {
-      refs = (await lib.queryPhotos({ person: [s.name], sort: 'score', limit: 3 })).map((p) => p.uuid);
-      if (!refs.length) log(`no People-tagged photos of ${s.name}; pass --ref ${s.name}=UUID for better recognition`);
-    }
-    subjects.push({ name: s.name, refs });
-  }
-  if (subjects.length) ctx.subjects = subjects;
-  const refUuids = ctx.subjects.flatMap((s) => s.refs.map((uuid) => ({ name: s.name, uuid })));
-  const refPhotos = refUuids.length ? await lib.getPhotos(refUuids.map((r) => r.uuid)) : [];
+  const refPhotos = await resolveSubjects(lib, ctx, opts.subjects, log);
   const refs: RefImage[] = (
     await Promise.all(
-      refPhotos.map(async (p, i) => {
-        const src = previewSource(p);
-        return src ? { name: refUuids[i].name, jpeg: await images.thumbnail(src, 384) } : null;
+      refPhotos.map(async ({ name, photo }) => {
+        const src = previewSource(photo);
+        return src ? { name, jpeg: await images.thumbnail(src, 384) } : null;
       }),
     )
   ).filter((r): r is RefImage => r !== null);

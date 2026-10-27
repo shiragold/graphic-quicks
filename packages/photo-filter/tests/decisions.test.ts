@@ -71,6 +71,24 @@ describe('createOpenRouterDecisions', () => {
     expect(waits).toEqual([2000, 4000]);
   });
 
+  it('retries network failures, then gives up after maxAttempts', async () => {
+    const waits: number[] = [];
+    let calls = 0;
+    const flaky = (async () => {
+      if (++calls === 1) throw new TypeError('fetch failed: ECONNRESET');
+      return new Response(JSON.stringify(ok().body), { status: 200 });
+    }) as unknown as typeof fetch;
+    const model = createOpenRouterDecisions({ apiKey: 'k', fetch: flaky, sleep: async (ms) => void waits.push(ms) });
+    await expect(model.decide(req)).resolves.toMatchObject({ answers });
+    expect(waits).toEqual([2000]);
+
+    const down = (async () => {
+      throw new TypeError('fetch failed: ENOTFOUND');
+    }) as unknown as typeof fetch;
+    const dead = createOpenRouterDecisions({ apiKey: 'k', fetch: down, maxAttempts: 3, sleep: async () => {} });
+    await expect(dead.decide(req)).rejects.toThrow(/judge x: Decisions API request failed: fetch failed: ENOTFOUND/);
+  });
+
   it('fails on client errors and on missing or mistyped answers', async () => {
     const mk = (r: { status: number; body: unknown }) => createOpenRouterDecisions({ apiKey: 'k', fetch: fakeFetch([r]).fn });
     await expect(mk({ status: 400, body: { error: { message: 'too many images' } } }).decide(req)).rejects.toThrow(/400: too many images/);

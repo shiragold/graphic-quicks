@@ -84,11 +84,21 @@ export function createOpenRouterDecisions(opts: OpenRouterDecisionOptions = {}):
       });
 
       for (let attempt = 1; ; attempt++) {
-        const res = await doFetch(`${baseUrl}/api/alpha/decisions`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-          body,
-        });
+        let res: Response;
+        try {
+          res = await doFetch(`${baseUrl}/api/alpha/decisions`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+            body,
+          });
+        } catch (err) {
+          // Network-level failure (reset, DNS, timeout): as transient as a 503.
+          if (attempt < maxAttempts) {
+            await sleep(2 ** attempt * 1000);
+            continue;
+          }
+          throw new Error(`${req.name}: Decisions API request failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
         const json = (await res.json().catch(() => ({}))) as DecisionsResponse;
         if (!res.ok) {
           if (RETRYABLE.has(res.status) && attempt < maxAttempts) {

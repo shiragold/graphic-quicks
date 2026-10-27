@@ -1,4 +1,14 @@
-import type { ImageTools, ModelRequest, PhotoLibrary, PhotoSummary, VisionModel } from '../src/index.js';
+import type {
+  Answer,
+  DecisionModel,
+  DecisionRequest,
+  ImageTools,
+  ModelRequest,
+  PhotoLibrary,
+  PhotoSummary,
+  Question,
+  VisionModel,
+} from '../src/index.js';
 
 export function photo(uuid: string, date: string, extra: Partial<PhotoSummary> = {}): PhotoSummary {
   return {
@@ -68,7 +78,11 @@ export function fakeLibrary(photos = partyPhotos()): PhotoLibrary & { queries: u
 export const fakeImages: ImageTools & { sheets: string[][] } = {
   sheets: [],
   thumbnail: async (path) => Buffer.from(path),
-  dhash: async (path) => BigInt(path.length) << BigInt(path.charCodeAt(path.length - 6) % 60),
+  dhash: async (input) => {
+    // Thumbnails are the path's bytes, so a hashed thumbnail hashes like its path.
+    const path = input.toString();
+    return BigInt(path.length) << BigInt(path.charCodeAt(path.length - 6) % 60);
+  },
   async contactSheet(items) {
     this.sheets.push(items.map((i) => i.label));
     return Buffer.from(items.map((i) => i.label).join(','));
@@ -107,6 +121,38 @@ export function fakeModel(): VisionModel & { requests: ModelRequest[] } {
       }
       const want = Number(/Return exactly (\d+) picks/.exec(texts(req).join('\n'))![1]);
       return { picks: Array.from({ length: want }, (_, i) => ({ index: i + 1, reason: `pick ${i + 1}` })) };
+    },
+  };
+}
+
+/**
+ * Deterministic stand-in for Jev: subject 0.9, random-but-seeded special and
+ * quality, and `choose` picks the answer to every choice question (first key by default).
+ */
+export function fakeDecisionModel(
+  choose: (keys: string[], call: number) => string = (keys) => keys[0],
+): DecisionModel & { requests: DecisionRequest[] } {
+  const requests: DecisionRequest[] = [];
+  let n = 0;
+  const rnd = () => ((n = (n * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
+  return {
+    id: 'fake:jev',
+    requests,
+    async decide(req) {
+      requests.push(req);
+      const answers: Record<string, Answer> = {};
+      for (const [id, q] of Object.entries(req.questions) as [string, Question][]) {
+        if (q.type === 'noul') {
+          // Keep most photos above the default min-score thresholds.
+          answers[id] = { type: 'noul', noul: id === 'subject' ? 0.9 : 0.55 + rnd() * 0.4 };
+        } else if (q.type === 'score') {
+          answers[id] = { type: 'score', score: 2 + rnd() * 2 };
+        } else {
+          const keys = Object.keys(q.criteria);
+          answers[id] = { type: 'choice', choice: choose(keys, requests.length) };
+        }
+      }
+      return { answers, model: 'fake:jev', usage: { inputTokens: 10, costUsd: 0.000001 } };
     },
   };
 }

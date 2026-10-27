@@ -62,7 +62,7 @@ Run from the repo root. Node >= 22, pnpm 10.
 pnpm install
 pnpm lint                          # eslint across the repo
 pnpm -r typecheck                  # tsc --noEmit in each package (apps have no typecheck script)
-pnpm test                          # package suites only (161 tests)
+pnpm test                          # package suites only (185 tests)
 pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + maps)
 ```
 
@@ -211,8 +211,11 @@ in the package but is not used by the CLI.
 
 `CurationContext` (default `~/.photo-filter/context/<album>--<brief>.json`)
 caches decision verdicts keyed by uuid + `model.id` +
-`DECISION_PROMPT_VERSION`; prior picks and review feedback steer later
-runs. Bump `DECISION_PROMPT_VERSION` whenever questions or scoring change.
+`DECISION_PROMPT_VERSION` + the subjects and their reference uuids, and
+caches every knockout heat's winner in `pickCache`, so `--yes` after a
+review exports exactly the reviewed picks. Prior picks and review feedback
+steer later runs. Bump `DECISION_PROMPT_VERSION` whenever questions or
+scoring change.
 
 The `select-best-photos` skill prefers `curate` for whole requests and
 falls back to the MCP tools for interactive browsing.

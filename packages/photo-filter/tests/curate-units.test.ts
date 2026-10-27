@@ -46,6 +46,15 @@ describe('groupNearDuplicates', () => {
     expect(groupNearDuplicates(photos, hashes)).toEqual([['A', 'B', 'C'], ['D']]);
   });
 
+  it('caps each group at the window so chains of similar shots do not merge without end', () => {
+    // Ten identical-looking shots a minute apart: each is within the window of its neighbour.
+    const show = Array.from({ length: 10 }, (_, i) =>
+      photo(`S${i}`, `2025-11-30T18:${String(i).padStart(2, '0')}:00+02:00`),
+    );
+    const groups = groupNearDuplicates(show, new Map(show.map((p) => [p.uuid, 0n])));
+    expect(groups).toEqual([['S0', 'S1', 'S2'], ['S3', 'S4', 'S5'], ['S6', 'S7', 'S8'], ['S9']]);
+  });
+
   it('counts differing bits', () => {
     expect(hamming(0b1011n, 0b0001n)).toBe(2);
   });

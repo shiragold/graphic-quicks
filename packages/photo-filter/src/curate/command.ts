@@ -8,7 +8,7 @@ import { defaultContextPath, loadContext, saveContext } from './context.js';
 import { countForRange, curateWithDecisions } from './decision-pipeline.js';
 import { DECISION_PROMPT_VERSION } from './decision-prompts.js';
 import { createOpenRouterDecisions, type DecisionModel } from './decisions.js';
-import { sharpImageTools } from './images.js';
+import { sharpImageTools, type ImageTools } from './images.js';
 import { parseReviewAnswer, recordReview, writeReviewSheet } from './review.js';
 
 export interface CurateCommandOptions {
@@ -33,14 +33,33 @@ export interface CurateCommandOptions {
   json: boolean;
 }
 
+export interface CurateCommandDeps {
+  model?: DecisionModel;
+  images?: ImageTools;
+  fit?: (jpeg: Buffer) => Promise<Buffer>;
+  /** Asks the confirm question; defaults to a stdin prompt when stdin is a TTY. */
+  ask?: (question: string) => Promise<string>;
+}
+
 const log = (message: string) => console.error(`· ${message}`);
+
+const ttyAsk = async (question: string) => {
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    return await rl.question(question);
+  } finally {
+    rl.close();
+  }
+};
 
 /** The `photo-filter curate` flow: Jev pipeline, review sheet, confirm, export, manifest, save context. */
 export async function runCurateCommand(
   lib: PhotoLibrary,
   opts: CurateCommandOptions,
-  model: DecisionModel = createOpenRouterDecisions({ model: opts.model }),
+  deps: CurateCommandDeps = {},
 ): Promise<void> {
+  const model = deps.model ?? createOpenRouterDecisions({ model: opts.model });
+  const images = deps.images ?? sharpImageTools;
   const contextPath = opts.contextPath ?? defaultContextPath(opts.album, opts.brief);
   const ctx = await loadContext(contextPath, opts.album, opts.brief);
   const dest = resolve(opts.dest);
@@ -52,7 +71,7 @@ export async function runCurateCommand(
   let result;
   try {
     result = await curateWithDecisions(
-      { lib, model, log },
+      { lib, model, images, fit: deps.fit, log },
       {
         album: opts.album,
         brief: opts.brief,
@@ -74,7 +93,7 @@ export async function runCurateCommand(
   const reviewPath = join(dest, 'review.html');
   await writeReviewSheet(reviewPath, result, opts.brief, async (uuid) => {
     const src = result.previews[uuid];
-    return src ? sharpImageTools.thumbnail(src, 480) : null;
+    return src ? images.thumbnail(src, 480) : null;
   });
   console.error(`· review sheet: ${reviewPath}`);
   console.error(`· context: ${contextPath}`);
@@ -90,15 +109,14 @@ export async function runCurateCommand(
 
   let answer = 'y';
   if (!opts.yes) {
-    if (!process.stdin.isTTY) {
+    const ask = deps.ask ?? (process.stdin.isTTY ? ttyAsk : undefined);
+    if (!ask) {
       console.error('not a terminal: open the review sheet, then re-run with --yes to export (results are cached)');
       return;
     }
-    const rl = createInterface({ input: process.stdin, output: process.stderr });
-    answer = await rl.question(
+    answer = await ask(
       `Export ${result.picks.length} photos to ${dest}? [Y]es / [n]o / drop e.g. "3,7: too blurry": `,
     );
-    rl.close();
   }
   const review = parseReviewAnswer(answer, result.picks.length);
   if (!review.export) {
@@ -107,6 +125,10 @@ export async function runCurateCommand(
   }
   const kept = recordReview(ctx, result.picks, review.drop, review.note) as typeof result.picks;
   await saveContext(contextPath, ctx);
+  if (!kept.length) {
+    console.error('all picks dropped; nothing exported (rejections saved for the next run)');
+    return;
+  }
 
   const files = await lib.exportPhotos(
     kept.map((p) => p.candidate.uuid),

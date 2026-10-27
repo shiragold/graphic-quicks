@@ -32,6 +32,8 @@ export interface DecisionVerdict {
   promptVersion: number;
   /** `DecisionModel.id` that produced this verdict; cache misses when it changes. */
   modelId: string;
+  /** Subjects and reference uuids the subject score was judged against; cache misses when they change. */
+  subjectKey?: string;
 }
 
 export interface PickRecord {

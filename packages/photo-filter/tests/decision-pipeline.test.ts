@@ -4,40 +4,12 @@ import {
   countForRange,
   curateWithDecisions,
   emptyContext,
+  MAX_DECISION_COUNT,
   photoScore,
-  type Answer,
   type CurationContext,
-  type DecisionModel,
-  type DecisionRequest,
-  type Question,
+  type ImageTools,
 } from '../src/index.js';
-import { fakeImages, fakeLibrary } from './curate-fixtures.js';
-
-function fakeDecisionModel(): DecisionModel & { requests: DecisionRequest[] } {
-  const requests: DecisionRequest[] = [];
-  let n = 0;
-  const rnd = () => ((n = (n * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
-  return {
-    id: 'fake:jev',
-    requests,
-    async decide(req) {
-      requests.push(req);
-      const answers: Record<string, Answer> = {};
-      for (const [id, q] of Object.entries(req.questions) as [string, Question][]) {
-        if (q.type === 'noul') {
-          // Keep most photos above the default min-score thresholds.
-          answers[id] = { type: 'noul', noul: id === 'subject' ? 0.9 : 0.55 + rnd() * 0.4 };
-        } else if (q.type === 'score') {
-          answers[id] = { type: 'score', score: 2 + rnd() * 2 };
-        } else {
-          const keys = Object.keys(q.criteria);
-          answers[id] = { type: 'choice', choice: keys[0] };
-        }
-      }
-      return { answers, model: 'fake:jev', usage: { inputTokens: 10, costUsd: 0.000001 } };
-    },
-  };
-}
+import { fakeDecisionModel, fakeImages, fakeLibrary, photo } from './curate-fixtures.js';
 
 describe('countForRange', () => {
   it('scales 20 per month by the date window', () => {
@@ -45,6 +17,11 @@ describe('countForRange', () => {
     expect(countForRange({ from: '2025-11-30', to: '2025-12-15' }, 20)).toBe(10);
     expect(countForRange({ around: '2025-11-30', days: 2 })).toBe(3);
     expect(countForRange({})).toBe(20);
+  });
+
+  it('caps long ranges at MAX_DECISION_COUNT', () => {
+    expect(countForRange({ from: '2025-01-01', to: '2026-01-01' })).toBe(MAX_DECISION_COUNT);
+    expect(countForRange({ from: '2025-01-01', to: '2026-01-01' }, 1)).toBe(12);
   });
 });
 
@@ -124,5 +101,88 @@ describe('curateWithDecisions', () => {
     expect(photoScore(v, 0)).toBe(1);
     expect(photoScore(v, 1)).toBe(0);
     expect(photoScore({ ...v, quality: 4 }, 0.3)).toBeCloseTo(1);
+  });
+
+  it('reproduces knockout winners on a re-run, without asking the model again', async () => {
+    // Rotating answers: an uncached re-run would pick differently.
+    const rotating = () => fakeDecisionModel((keys, call) => keys[call % keys.length]);
+    const first = await run(rotating());
+    const again = rotating();
+    const second = await run(again);
+    expect(again.requests).toHaveLength(0);
+    expect(second.picks.map((p) => p.candidate.uuid)).toEqual(first.picks.map((p) => p.candidate.uuid));
+  });
+
+  it('re-judges when the subjects or their reference photos change', async () => {
+    await run();
+    const other = fakeDecisionModel();
+    await curateWithDecisions(
+      { lib: fakeLibrary(), model: other, images: fakeImages, fit: async (b) => b },
+      {
+        album: 'annaelle 4',
+        around: '2025-11-30',
+        brief: 'birthday party',
+        count: 3,
+        subjects: [{ name: 'Noam', refs: ['REF'] }],
+        context: ctx,
+        minScore: 0.2,
+      },
+    );
+    expect(other.requests.filter((r) => r.name.startsWith('judge'))).toHaveLength(12);
+  });
+
+  it('filters near-duplicates by subject and quality before the burst knockout', async () => {
+    const base = fakeDecisionModel();
+    // B1 (the knockout's default choice) is off-subject; B2 shows the subject.
+    const model = {
+      ...base,
+      async decide(req: Parameters<typeof base.decide>[0]) {
+        const r = await base.decide(req);
+        if (req.name === 'judge B1') r.answers.subject = { type: 'noul', noul: 0.3 };
+        return r;
+      },
+    };
+    const lib = fakeLibrary([
+      photo('B1', '2025-11-30T15:00:00+02:00'),
+      photo('B2', '2025-11-30T15:00:01+02:00'),
+    ]);
+    const result = await run(model, lib);
+    expect(result.picks.map((p) => p.candidate.uuid)).toEqual(['B2']);
+    expect(base.requests.some((r) => r.name.startsWith('burst'))).toBe(false);
+  });
+
+  it('skips photos whose file cannot be read instead of failing the run', async () => {
+    const images: ImageTools = {
+      ...fakeImages,
+      thumbnail: async (path, size) => {
+        if (path.includes('P4')) throw new Error('corrupt JPEG');
+        return fakeImages.thumbnail(path, size);
+      },
+    };
+    const model = fakeDecisionModel();
+    const result = await curateWithDecisions(
+      { lib: fakeLibrary(), model, images, fit: async (b) => b },
+      { album: 'annaelle 4', around: '2025-11-30', brief: 'birthday party', count: 3, context: ctx, minScore: 0.2 },
+    );
+    expect(result.skipped).toEqual(['X1', 'P4']);
+    expect(result.picks).toHaveLength(3);
+    expect(model.requests.some((r) => r.name === 'judge P4')).toBe(false);
+  });
+
+  it('hashes the decoded thumbnail rather than re-reading the original', async () => {
+    const inputs: (string | Buffer)[] = [];
+    const images: ImageTools = {
+      ...fakeImages,
+      dhash: async (input) => {
+        inputs.push(input);
+        return fakeImages.dhash(input);
+      },
+    };
+    await curateWithDecisions(
+      { lib: fakeLibrary(), model: fakeDecisionModel(), images, fit: async (b) => b },
+      { album: 'annaelle 4', around: '2025-11-30', brief: 'birthday party', count: 3, context: ctx },
+    );
+    expect(inputs).toHaveLength(12);
+    expect(inputs.every((i) => Buffer.isBuffer(i))).toBe(true);
   });
 });

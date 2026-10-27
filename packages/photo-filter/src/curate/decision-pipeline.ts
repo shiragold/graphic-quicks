@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
+
 import type { PhotoLibrary } from '../library.js';
 import type { AlbumSummary, PhotoSummary } from '../types.js';
-import type { CurationContext, DecisionVerdict, Subject } from './context.js';
+import type { CurationContext, DecisionVerdict } from './context.js';
 import {
   burstCompareInstructions,
   DECISION_PROMPT_VERSION,
@@ -11,7 +13,7 @@ import type { Answer, DecisionModel, DecisionRequest, StateItem } from './decisi
 import { fitForDecision } from './fit.js';
 import { groupNearDuplicates, splitEvents } from './group.js';
 import { sharpImageTools, type ImageTools } from './images.js';
-import { mapLimit, resolveAlbum } from './pipeline.js';
+import { mapLimit, previewSource, resolveAlbum, resolveSubjects } from './pipeline.js';
 
 export interface DecisionCurateDeps {
   lib: PhotoLibrary;
@@ -69,8 +71,7 @@ export const MAX_DECISION_COUNT = 60;
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
 /** Prefer a local original JPEG/PNG over the often-tiny shared-album preview. */
-export const previewSource = (p: PhotoSummary) =>
-  (p.path && /\.(jpe?g|png)$/i.test(p.path) ? p.path : p.previewPath) ?? null;
+const source = (p: PhotoSummary) => previewSource(p, true);
 
 const localTime = (iso: string) => iso.slice(0, 16).replace('T', ' ');
 const num = (a: Answer) => (a.type === 'noul' ? a.noul : a.type === 'score' ? a.score : NaN);
@@ -86,7 +87,10 @@ export function formatDecisionReason(v: DecisionVerdict, qualityWeight: number):
   );
 }
 
-/** Default pick count: `perMonth` photos per 30 days of the date range (falls back to `perMonth` when unknown). */
+/**
+ * Default pick count: `perMonth` photos per 30 days of the date range (falls back
+ * to `perMonth` when unknown), capped at `MAX_DECISION_COUNT`.
+ */
 export function countForRange(
   opts: { from?: string; to?: string; around?: string; days?: number },
   perMonth = 20,
@@ -94,8 +98,8 @@ export function countForRange(
   let days: number | undefined;
   if (opts.from && opts.to) days = (Date.parse(opts.to) - Date.parse(opts.from)) / 86_400_000;
   else if (opts.around !== undefined) days = 2 * (opts.days ?? 2) + 1;
-  if (days === undefined || !Number.isFinite(days) || days <= 0) return perMonth;
-  return Math.max(1, Math.round((perMonth * days) / 30));
+  const count = days === undefined || !Number.isFinite(days) || days <= 0 ? perMonth : (perMonth * days) / 30;
+  return Math.min(MAX_DECISION_COUNT, Math.max(1, Math.round(count)));
 }
 
 export async function curateWithDecisions(
@@ -137,32 +141,19 @@ export async function curateWithDecisions(
     to: opts.to,
     sort: 'date',
   });
-  const photos = queried.filter((p) => previewSource(p) !== null);
-  const skipped = queried.filter((p) => previewSource(p) === null).map((p) => p.uuid);
+  let photos = queried.filter((p) => source(p) !== null);
+  const skipped = queried.filter((p) => source(p) === null).map((p) => p.uuid);
   log(
     `${album.name}: ${queried.length} photos in range` +
       `${skipped.length ? `, ${skipped.length} iCloud-only skipped` : ''}; model ${model.id}`,
   );
 
-  const subjects: Subject[] = [];
-  for (const s of opts.subjects ?? []) {
-    const saved = ctx.subjects.find((c) => c.name === s.name);
-    let refs = s.refs?.length ? s.refs : (saved?.refs ?? []);
-    if (!refs.length) {
-      refs = (await lib.queryPhotos({ person: [s.name], sort: 'score', limit: 3 })).map((p) => p.uuid);
-      if (!refs.length) log(`no People-tagged photos of ${s.name}; pass --ref ${s.name}=UUID for better recognition`);
-    }
-    subjects.push({ name: s.name, refs });
-  }
-  if (subjects.length) ctx.subjects = subjects;
-
-  const refUuids = ctx.subjects.flatMap((s) => s.refs.map((uuid) => ({ name: s.name, uuid })));
-  const refPhotos = refUuids.length ? await lib.getPhotos(refUuids.map((r) => r.uuid)) : [];
+  const refPhotos = await resolveSubjects(lib, ctx, opts.subjects, log);
   const refBuffers: { name: string; jpeg: Buffer }[] = (
     await Promise.all(
-      refPhotos.map(async (p, i) => {
-        const src = previewSource(p);
-        return src ? { name: refUuids[i].name, jpeg: await fit(await images.thumbnail(src, 384)) } : null;
+      refPhotos.map(async ({ name, photo }) => {
+        const src = source(photo);
+        return src ? { name, jpeg: await fit(await images.thumbnail(src, 384)) } : null;
       }),
     )
   ).filter((r): r is { name: string; jpeg: Buffer } => r !== null);
@@ -180,22 +171,37 @@ export async function curateWithDecisions(
 
   const thumbs = new Map<string, Buffer>();
   const hashes = new Map<string, bigint>();
+  const unreadable = new Set<string>();
   await mapLimit(photos, 8, async (p) => {
-    thumbs.set(p.uuid, await fit(await images.thumbnail(previewSource(p)!, 512)));
+    let thumb: Buffer;
     try {
-      hashes.set(p.uuid, await images.dhash(previewSource(p)!));
+      thumb = await images.thumbnail(source(p)!, 512);
+      thumbs.set(p.uuid, await fit(thumb));
     } catch {
-      // unreadable: grouped by burst timing only
+      unreadable.add(p.uuid);
+      return;
+    }
+    try {
+      // Hash the decoded thumbnail rather than decoding the original a second time.
+      hashes.set(p.uuid, await images.dhash(thumb));
+    } catch {
+      // unhashable: grouped by burst timing only
     }
   });
+  if (unreadable.size) {
+    photos = photos.filter((p) => !unreadable.has(p.uuid));
+    skipped.push(...unreadable);
+    log(`${unreadable.size} unreadable photos skipped`);
+  }
 
   const groups = groupNearDuplicates(photos, hashes);
-  const groupOf = new Map(groups.flatMap((g, gi) => g.map((u) => [u, gi + 1] as const)));
   const events = splitEvents(photos, gapHours);
   const eventOf = new Map(events.flatMap((e) => e.photos.map((p) => [p.uuid, e.id] as const)));
   log(`${groups.length} near-duplicate groups, ${events.length} events`);
 
   const questions = judgeQuestions(subjectText);
+  // Subject scores depend on who the subjects are and which reference photos show them.
+  const subjectKey = ctx.subjects.map((s) => `${s.name}=${s.refs.join('+')}`).join(';');
   const scoreOf = (v: DecisionVerdict) => photoScore(v, qualityWeight);
   let done = 0;
 
@@ -204,7 +210,8 @@ export async function curateWithDecisions(
     if (
       cached &&
       cached.promptVersion === DECISION_PROMPT_VERSION &&
-      cached.modelId === model.id
+      cached.modelId === model.id &&
+      cached.subjectKey === subjectKey
     ) {
       done++;
       return;
@@ -221,6 +228,7 @@ export async function curateWithDecisions(
       quality: num(a.quality),
       promptVersion: DECISION_PROMPT_VERSION,
       modelId: model.id,
+      subjectKey,
     };
     if (++done % 10 === 0 || done === photos.length) log(`judged ${done}/${photos.length}`);
   });
@@ -233,6 +241,15 @@ export async function curateWithDecisions(
         const heat = remaining.slice(i, i + 4);
         if (heat.length === 1) {
           next.push(heat[0]);
+          continue;
+        }
+        // Cache each heat's winner so a re-run (e.g. with --yes) reproduces the reviewed picks.
+        const key = `decision:${createHash('sha1')
+          .update(JSON.stringify([DECISION_PROMPT_VERSION, model.id, instructions, opts.brief, heat]))
+          .digest('hex')}`;
+        const cached = ctx.pickCache[key]?.[0]?.uuid;
+        if (cached && heat.includes(cached)) {
+          next.push(cached);
           continue;
         }
         const a = await decide({
@@ -250,30 +267,29 @@ export async function curateWithDecisions(
           },
         });
         const letter = a.best.type === 'choice' ? a.best.choice : 'A';
-        next.push(heat[LETTERS.indexOf(letter as (typeof LETTERS)[number])] ?? heat[0]);
+        const winner = heat[LETTERS.indexOf(letter as (typeof LETTERS)[number])] ?? heat[0];
+        ctx.pickCache[key] = [{ uuid: winner, reason: name }];
+        next.push(winner);
       }
       remaining = next;
     }
     return remaining[0];
   }
 
-  const winners = new Map<number, string>();
-  await mapLimit(
-    groups.filter((g) => g.length > 1),
-    concurrency,
-    async (group) => {
-      const g = groupOf.get(group[0])!;
-      winners.set(g, await knockout(`burst ${g}`, group, burstCompareInstructions()));
-    },
-  );
-
+  // Filter each near-duplicate group before its knockout, so a winner that fails
+  // the subject/quality bar can't take the whole group down with it.
   const rejected = new Set(ctx.feedback.filter((f) => f.verdict === 'rejected').map((f) => f.uuid));
-  const keepers = groups
-    .map((g, gi) => (g.length > 1 ? winners.get(gi + 1)! : g[0]))
-    .filter((u) => {
-      const v = ctx.decisionVerdicts[u];
-      return v && v.subject >= 0.5 && v.quality >= 1 && !rejected.has(u);
-    });
+  const eligible = (u: string) => {
+    const v = ctx.decisionVerdicts[u];
+    return !!v && v.subject >= 0.5 && v.quality >= 1 && !rejected.has(u);
+  };
+  const keepers = (
+    await mapLimit(groups, concurrency, async (group, gi) => {
+      const pool = group.filter(eligible);
+      if (pool.length <= 1) return pool[0];
+      return knockout(`burst ${gi + 1}`, pool, burstCompareInstructions());
+    })
+  ).filter((u): u is string => u !== undefined);
   const strong = keepers.filter((u) => scoreOf(ctx.decisionVerdicts[u]) >= minScore);
 
   const byEvent = new Map<string, string[]>();
@@ -345,7 +361,7 @@ export async function curateWithDecisions(
     events: eventSummaries,
     shortlist,
     picks,
-    previews: Object.fromEntries(shortlist.map((c) => [c.uuid, previewSource(photoBy.get(c.uuid)!)!])),
+    previews: Object.fromEntries(shortlist.map((c) => [c.uuid, source(photoBy.get(c.uuid)!)!])),
     modelCalls,
     inputTokens,
     costUsd,

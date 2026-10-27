@@ -14,8 +14,8 @@ export interface SheetOptions {
 export interface ImageTools {
   /** JPEG whose long edge is at most `size` px, EXIF-rotated. */
   thumbnail(path: string, size: number): Promise<Buffer>;
-  /** 64-bit difference hash, for near-duplicate detection. */
-  dhash(path: string): Promise<bigint>;
+  /** 64-bit difference hash of an image file or encoded buffer, for near-duplicate detection. */
+  dhash(input: string | Buffer): Promise<bigint>;
   /** JPEG grid of square cells, each stamped with its label in the top-left corner. */
   contactSheet(items: SheetItem[], opts: SheetOptions): Promise<Buffer>;
 }
@@ -39,8 +39,8 @@ export const sharpImageTools: ImageTools = {
   thumbnail: (path, size) =>
     sharp(path).rotate().resize(size, size, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer(),
 
-  async dhash(path) {
-    const px = await sharp(path).rotate().grayscale().resize(9, 8, { fit: 'fill' }).raw().toBuffer();
+  async dhash(input) {
+    const px = await sharp(input).rotate().grayscale().resize(9, 8, { fit: 'fill' }).raw().toBuffer();
     let hash = 0n;
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
