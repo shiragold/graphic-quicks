@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "photo-filter": {
+      "command": "node",
+      "args": ["${workspaceFolder}/packages/photo-filter/dist/mcp.js"],
+      "env": {
+        "PHOTO_FILTER_OSXPHOTOS": "uvx --python 3.12 osxphotos"
+      }
+    }
+  }
+}
