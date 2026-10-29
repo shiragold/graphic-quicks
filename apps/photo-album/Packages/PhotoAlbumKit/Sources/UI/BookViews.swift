@@ -88,7 +88,7 @@ struct BookView: View {
                     ForEach(Array(book.collages.enumerated()), id: \.element.id) { i, c in
                         VStack(alignment: .leading) {
                             Text("\(i + 1). \(model.catalog.template(c.templateID)?.1.displayName ?? c.templateID)")
-                            Text("\(c.placements.count) Photos · \(c.status.rawValue)")
+                            Text("\(c.theme) · \(c.placements.count) Photos · \(c.status.rawValue)")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         .tag(c.id)
@@ -175,6 +175,9 @@ struct CollageView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding()
+            if let note = model.themeBundle(for: collage)?.note {
+                Label(note, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(.orange)
+            }
             HStack {
                 if let working { ProgressView().controlSize(.small); Text(working).foregroundStyle(.secondary) }
                 Spacer()

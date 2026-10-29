@@ -14,12 +14,14 @@ import Usage
 /// The app's state: the Catalog, the saved Books, the Photos Library and the Usage Log.
 @MainActor @Observable
 public final class AppModel {
-    public let catalog: Catalog
+    /// All Theme versions from every source; `catalog` is the newest compatible version of each.
+    public let themes: ThemeCatalog
+    public var catalog: Catalog { themes.catalog }
     public let source = PhotoKitSource()
     let insights: any InsightProvider = CentreFocusInsights()
     private let store: BookStore?
     private let usage: UsageLog?
-    private var assetsByTheme: [String: ThemeAssets] = [:]
+    private var assetsByTheme: [ThemeRef: ThemeAssets] = [:]
 
     public private(set) var books: [Book] = []
     public var openBookID: UUID?
@@ -33,9 +35,11 @@ public final class AppModel {
 
     /// - Parameter themesDirectory: the folder of built-in Theme bundles.
     public init(themesDirectory: URL, appVersion: String) {
-        do { catalog = try Catalog(directory: themesDirectory) } catch {
-            catalog = Catalog(bundles: [])
-            lastError = "Themes could not be loaded: \(error)"
+        // One source today. A hosted catalog becomes a second element here (see ThemeSource.swift).
+        themes = ThemeCatalog(sources: [BundledThemeSource(directory: themesDirectory)],
+                              compatibility: ThemeCompatibility(appVersion: ThemeVersion(appVersion)))
+        if themes.catalog.bundles.isEmpty {
+            lastError = "No Themes could be loaded: \(themes.skipped.map(\.description).joined(separator: "; "))"
         }
         store = try? BookStore.standard()
         usage = try? UsageLog.standard(appVersion: appVersion)
@@ -77,12 +81,24 @@ public final class AppModel {
 
     // MARK: Catalog
 
+    /// Assets of the newest version of a Theme.
     func assets(for themeID: String) -> ThemeAssets? {
-        if let a = assetsByTheme[themeID] { return a }
-        guard let b = catalog.bundle(themeID) else { return nil }
-        let a = ThemeAssets(bundle: b)
-        assetsByTheme[themeID] = a
+        catalog.bundle(themeID).map(assets)
+    }
+
+    func assets(_ bundle: ThemeBundle) -> ThemeAssets {
+        if let a = assetsByTheme[bundle.theme.ref] { return a }
+        let a = ThemeAssets(bundle: bundle)
+        assetsByTheme[bundle.theme.ref] = a
         return a
+    }
+
+    /// The exact Theme version a Collage was made with, or the newest one plus a note when
+    /// that version is no longer available.
+    func themeBundle(for collage: Collage) -> (bundle: ThemeBundle, note: String?)? {
+        if let exact = themes.bundle(for: collage.theme) { return (exact, nil) }
+        guard let newest = themes.newest(collage.theme.id) else { return nil }
+        return (newest, "Made with \(collage.theme); \(collage.theme.version) is no longer installed, so this preview uses \(newest.theme.version).")
     }
 
     // MARK: Add Photos → Collage
@@ -93,7 +109,8 @@ public final class AppModel {
         guard let book = openBook else { throw CompositionError.unknownCollage(UUID()) }
         var matchable: [MatchablePhoto] = []
         for p in kept { matchable.append(MatchablePhoto(id: p.id, aspect: p.aspect, insight: await insights.insight(for: p))) }
-        let collage = try CollageMaker.make(template: template, format: book.pageFormat, photos: matchable)
+        guard let bundle = catalog.bundle(template.themeID) else { throw CatalogError.unknownAsset(template.themeID) }
+        let collage = try CollageMaker.make(template: template, theme: bundle.theme.ref, format: book.pageFormat, photos: matchable)
         try mutateOpenBook { b in
             b.add(kept)
             for p in excluded { try b.exclude(p.id) }
@@ -116,9 +133,10 @@ public final class AppModel {
 
     /// A Render scene for a Collage, with Images loaded at `pagePixels` page size.
     func scene(for collage: Collage, in book: Book, pagePixels: CGSize, preview: Bool) async throws -> RenderScene {
-        guard let (bundle, template) = catalog.template(collage.templateID), let assets = assets(for: bundle.id) else {
+        guard let (bundle, _) = themeBundle(for: collage), let template = bundle.template(collage.templateID) else {
             throw CatalogError.unknownAsset(collage.templateID)
         }
+        let assets = assets(bundle)
         let resolved = try template.resolve(format: book.pageFormat, photoCount: collage.photoCount)
         var images: [String: SlotImage] = [:]
         for slot in resolved.slots {
@@ -175,14 +193,15 @@ public final class AppModel {
     // MARK: Usage
 
     private func variant(of collage: Collage, in book: Book) -> Variant? {
-        guard let (_, t) = catalog.template(collage.templateID),
+        guard let t = themeBundle(for: collage)?.bundle.template(collage.templateID),
               let theme = ThemeID(t.themeID), let template = TemplateID(t.localID),
               let format = Usage.PageFormat(rawValue: book.pageFormat.rawValue) else { return nil }
-        return Variant(theme: theme, template: template, format: format, palette: PaletteID(collage.palette) ?? .default)
+        return Variant(theme: theme, template: template, format: format, palette: PaletteID(collage.palette) ?? .default,
+                       themeVersion: ThemeVersionID(collage.theme.version))
     }
 
     private func optionalOutcome(_ collage: Collage, _ book: Book) -> OptionalSlotOutcome {
-        guard let (_, t) = catalog.template(collage.templateID),
+        guard let t = themeBundle(for: collage)?.bundle.template(collage.templateID),
               let r = try? t.resolve(format: book.pageFormat, photoCount: collage.photoCount) else { return .none }
         if r.hasEmptyOptionalSlot { return .empty }
         return r.hasOptionalSlot ? .filled : .none

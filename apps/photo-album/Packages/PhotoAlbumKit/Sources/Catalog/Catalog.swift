@@ -80,14 +80,13 @@ public struct Catalog: Sendable {
         self.bundles = bundles
     }
 
-    /// Loads every Theme bundle (a directory with a `theme.json`) inside `directory`, by ID.
+    /// Loads the Theme bundles in a local folder through `BundledThemeSource` and the default
+    /// compatibility gate (newest compatible version of each Theme).
     public init(directory: URL) throws {
-        let fm = FileManager.default
-        let children = try fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-        bundles = try children
-            .filter { fm.fileExists(atPath: $0.appending(path: "theme.json").path) }
-            .sorted { $0.lastPathComponent < $1.lastPathComponent }
-            .map { try ThemeBundle(directory: $0) }
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            throw CocoaError(.fileNoSuchFile, userInfo: [NSFilePathErrorKey: directory.path])
+        }
+        self = ThemeCatalog(sources: [BundledThemeSource(directory: directory)]).catalog
     }
 
     public func bundle(_ themeID: String) -> ThemeBundle? { bundles.first { $0.id == themeID } }

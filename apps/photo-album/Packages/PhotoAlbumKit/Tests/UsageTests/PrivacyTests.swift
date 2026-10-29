@@ -12,7 +12,7 @@ struct PrivacyTests {
     static func isAllowedLeaf(_ value: Any) -> Bool {
         value is ThemeID || value is TemplateID || value is PaletteID || value is PageFormat
             || value is TextBinding || value is QuickRating || value is OptionalSlotOutcome
-            || value is CollageRef || value is Int || value is Bool
+            || value is CollageRef || value is ThemeVersionID || value is Int || value is Bool
     }
 
     /// Walks a value with `Mirror`, descending into enums, tuples, arrays, Variant and
@@ -22,6 +22,7 @@ struct PrivacyTests {
         let mirror = Mirror(reflecting: value)
         let descend = value is UsageSignal || value is Variant || value is PickSource
             || mirror.displayStyle == .tuple || mirror.displayStyle == .collection
+            || mirror.displayStyle == .optional
         guard descend else { return ["\(path): \(type(of: value))"] }
         // zip, not enumerated(): this test bundle also runs on macOS 15 hosts, where the
         // macOS 26 deployment target's `EnumeratedSequence: Collection` is missing.

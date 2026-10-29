@@ -15,7 +15,7 @@ struct UsageLogTests {
         let entries = try await log.entries()
         #expect(entries.map(\.signal) == everySignal)
         #expect(entries.map(\.sequence) == Array(0..<everySignal.count))
-        #expect(entries.last?.date == date("2026-10-05T08:15:00Z"))
+        #expect(entries.last?.date == date("2026-10-05T08:00:00Z").addingTimeInterval(Double(everySignal.count - 1) * 60))
         #expect(Set(entries.map(\.month)) == [month("2026-10")])
     }
 

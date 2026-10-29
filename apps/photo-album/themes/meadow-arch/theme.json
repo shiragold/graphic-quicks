@@ -3,6 +3,7 @@
   "id": "meadow-arch",
   "name": "Meadow Arch",
   "version": "0.1.0",
+  "templateFormat": "photo-album/template@1",
   "description": "Calm editorial pages: arch, circle and blob crops, sun discs, line-art botanicals and a high-contrast serif.",
   "license": "Original work, CC0",
   "tags": ["minimal", "editorial", "arch", "botanical", "organic shapes", "boho"],

@@ -96,6 +96,41 @@ public struct PaletteID: CatalogID {
     public var isDefault: Bool { self == .default }
 }
 
+/// A Theme's version, e.g. `0.1.0`: one to four dot-separated numbers, at most 23 characters.
+/// Like the Catalog IDs it accepts nothing else, so no text can ride along in it.
+public struct ThemeVersionID: Hashable, Comparable, Sendable, Codable, CustomStringConvertible {
+    public let rawValue: String
+
+    public init?(_ rawValue: String) {
+        let parts = rawValue.split(separator: ".", omittingEmptySubsequences: false)
+        guard rawValue.count <= 23, (1...4).contains(parts.count),
+              parts.allSatisfy({ !$0.isEmpty && $0.count <= 5 && $0.allSatisfy { ("0"..."9").contains($0) } })
+        else { return nil }
+        self.rawValue = rawValue
+    }
+
+    public var description: String { rawValue }
+
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        let a = lhs.rawValue.split(separator: ".").map { Int($0)! }, b = rhs.rawValue.split(separator: ".").map { Int($0)! }
+        return a.lexicographicallyPrecedes(b)
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        guard let v = Self(raw) else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath,
+                                                    debugDescription: "Not a theme version: expected digits and dots"))
+        }
+        self = v
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(rawValue)
+    }
+}
+
 /// The three Page Formats every Template ships in.
 public enum PageFormat: String, CaseIterable, Codable, Sendable, Comparable {
     case square
@@ -133,26 +168,33 @@ public struct TemplateRef: Hashable, Comparable, Codable, Sendable, CustomString
 }
 
 /// One combination of Theme × Template × Page Format × Palette. Usage is counted per Variant.
+/// `themeVersion` is the Theme version the Collage was made with, so counts for different
+/// versions of a Theme stay apart; nil for records made before versions were recorded.
 public struct Variant: Hashable, Comparable, Codable, Sendable, CustomStringConvertible {
     public let theme: ThemeID
     public let template: TemplateID
     public let format: PageFormat
     public let palette: PaletteID
+    public let themeVersion: ThemeVersionID?
 
-    public init(theme: ThemeID, template: TemplateID, format: PageFormat, palette: PaletteID = .default) {
+    public init(theme: ThemeID, template: TemplateID, format: PageFormat, palette: PaletteID = .default,
+                themeVersion: ThemeVersionID? = nil) {
         self.theme = theme
         self.template = template
         self.format = format
         self.palette = palette
+        self.themeVersion = themeVersion
     }
 
     public var templateRef: TemplateRef { TemplateRef(theme: theme, template: template) }
 
-    public var description: String { "\(theme)/\(template) \(format.rawValue) \(palette)" }
+    public var description: String {
+        "\(theme)\(themeVersion.map { "@\($0)" } ?? "")/\(template) \(format.rawValue) \(palette)"
+    }
 
     public static func < (lhs: Self, rhs: Self) -> Bool {
-        (lhs.theme, lhs.template, lhs.format, lhs.palette)
-            < (rhs.theme, rhs.template, rhs.format, rhs.palette)
+        (lhs.theme, lhs.template, lhs.format, lhs.palette, lhs.themeVersion?.rawValue ?? "")
+            < (rhs.theme, rhs.template, rhs.format, rhs.palette, rhs.themeVersion?.rawValue ?? "")
     }
 }
 

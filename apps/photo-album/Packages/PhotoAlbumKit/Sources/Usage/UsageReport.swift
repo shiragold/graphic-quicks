@@ -15,6 +15,8 @@ public struct UsageReport: Hashable, Codable, Sendable {
         public var template: TemplateID
         public var format: PageFormat
         public var palette: PaletteID
+        /// The Theme version, when recorded. Omitted from the JSON when nil.
+        public var themeVersion: ThemeVersionID?
         /// Times offered in Template Suggestions.
         public var suggested = 0
         /// Chosen from Suggestions.
@@ -43,10 +45,11 @@ public struct UsageReport: Hashable, Codable, Sendable {
             template = variant.template
             format = variant.format
             palette = variant.palette
+            themeVersion = variant.themeVersion
         }
 
         public var variant: Variant {
-            Variant(theme: theme, template: template, format: format, palette: palette)
+            Variant(theme: theme, template: template, format: format, palette: palette, themeVersion: themeVersion)
         }
 
         var isEmpty: Bool {
@@ -56,7 +59,7 @@ public struct UsageReport: Hashable, Codable, Sendable {
         }
 
         enum CodingKeys: String, CodingKey {
-            case theme, template, format, palette, suggested, picked, searched, made, kept
+            case theme, template, format, palette, themeVersion, suggested, picked, searched, made, kept
             case replaced, removed, remade, optionalEmpty, textOverridden, ratingUp, ratingDown
         }
 
@@ -66,6 +69,7 @@ public struct UsageReport: Hashable, Codable, Sendable {
             template = try c.decode(TemplateID.self, forKey: .template)
             format = try c.decode(PageFormat.self, forKey: .format)
             palette = try c.decode(PaletteID.self, forKey: .palette)
+            themeVersion = try c.decodeIfPresent(ThemeVersionID.self, forKey: .themeVersion)
             suggested = try c.decode(Int.self, forKey: .suggested)
             picked = try c.decode(Int.self, forKey: .picked)
             searched = try c.decode(Int.self, forKey: .searched)
@@ -93,6 +97,7 @@ public struct UsageReport: Hashable, Codable, Sendable {
             try c.encode(template, forKey: .template)
             try c.encode(format, forKey: .format)
             try c.encode(palette, forKey: .palette)
+            try c.encodeIfPresent(themeVersion, forKey: .themeVersion)
             try c.encode(suggested, forKey: .suggested)
             try c.encode(picked, forKey: .picked)
             try c.encode(searched, forKey: .searched)

@@ -9,6 +9,11 @@ public struct Theme: Codable, Hashable, Sendable, Identifiable {
     public var id: String
     public var name: String
     public var version: String
+    /// The Template format of its Templates (`photo-album/template@1`). Checked by
+    /// `ThemeCompatibility` before the Theme is loaded.
+    public var templateFormat: String?
+    /// The oldest app version that can render this Theme.
+    public var minAppVersion: String?
     public var description: String?
     public var tags: [String]?
     public var mood: [String]?
@@ -25,6 +30,8 @@ public struct Theme: Codable, Hashable, Sendable, Identifiable {
     public var assets: [String: String]
     /// Template file paths inside the bundle, in Catalog order.
     public var templates: [String]
+
+    public var ref: ThemeRef { ThemeRef(id: id, version: version) }
 
     /// The names of all Palettes, `default` first.
     public var paletteNames: [String] {

@@ -6,7 +6,7 @@ direction is the one listed there.
 
 | Module | Holds |
 |---|---|
-| `Catalog` | Theme and Template models (`photo-album/theme@1`, `photo-album/template@1`), Tokens and Palettes, Page Format overrides, Optional Slots with Absent Overrides, Bindings |
+| `Catalog` | Theme and Template models (`photo-album/theme@1`, `photo-album/template@1`), Tokens and Palettes, Page Format overrides, Optional Slots with Absent Overrides, Bindings; Theme sources (`ThemeSource`, `BundledThemeSource`), the compatibility gate and `ThemeCatalog` |
 | `Library` | `Photo`, `PhotoID`, `PhotoSource`, `PhotoKitSource` (Access, fetch by Period, thumbnails, Originals) |
 | `Grouping` | `Period`, `PeriodIndex` (months with counts), the transient `Group` |
 | `Insights` | `Insight`; `CentreFocusInsights` is a stub for the Vision step |
@@ -16,6 +16,24 @@ direction is the one listed there.
 | `Export` | PNG (300 DPI, DPI metadata) and PDF (one Collage per page, the Book PDF) |
 | `Usage` | The Usage Log, monthly Usage Reports, Preferences and Quick Rating sampling |
 | `UI` | SwiftUI flow: Book picker, Book overview, Add Photos (Access → month → Group → Template), Collage preview and export |
+
+## Theme sources and versions
+
+A Theme is identified by `id` + `version` (`ThemeRef`). Collages store it, and Usage
+`Variant`s carry `themeVersion`, so a Theme update never silently changes a finished page or
+mixes its counts with the older version's.
+
+- `ThemeSource` lists Theme headers and loads bundles. `BundledThemeSource` reads the Themes
+  shipped in the app's resources. A hosted catalog (`CatalogThemeSource`: a `catalog.json`,
+  with downloads cached in Application Support) is sketched in `ThemeSource.swift` and not built.
+- `ThemeCompatibility` is the gate. A Theme must use `photo-album/theme@1`, declare
+  `templateFormat: "photo-album/template@1"` and have a numeric `version`. Its optional
+  `minAppVersion` must not exceed the app's version. Skipped Themes are logged with the reason
+  (subsystem `com.graphicquicks.PhotoAlbum`, category `ThemeCatalog`) and listed in
+  `ThemeCatalog.skipped`.
+- `ThemeCatalog(sources:)` merges sources. Per Theme ID the newest compatible version wins; on
+  a tie, the earlier source. Older compatible versions stay available through
+  `bundle(for: ThemeRef)`. Adding a remote source is one more element in `sources`.
 
 The `parity` executable renders every Template × Page Format for the renderer parity check
 (`apps/photo-album/parity/README.md`).

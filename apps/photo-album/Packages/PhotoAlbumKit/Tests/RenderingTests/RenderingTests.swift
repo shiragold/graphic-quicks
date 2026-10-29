@@ -168,9 +168,9 @@ struct CompositionTests {
         var book = Book(title: "t", pageFormat: .square)
         let a = photo("a", 4, 3), b = photo("b", 3, 4)
         book.add([a, b])
-        let c1 = Collage(templateID: "x/y", photoCount: 1, placements: ["p1": Placement(photo: a.id, origin: .suggested)], fits: [:])
+        let c1 = Collage(templateID: "x/y", theme: ThemeRef(id: "x", version: "1.0"), photoCount: 1, placements: ["p1": Placement(photo: a.id, origin: .suggested)], fits: [:])
         try book.addCollage(c1)
-        let c2 = Collage(templateID: "x/y", photoCount: 1, placements: ["p1": Placement(photo: a.id, origin: .suggested)], fits: [:])
+        let c2 = Collage(templateID: "x/y", theme: ThemeRef(id: "x", version: "1.0"), photoCount: 1, placements: ["p1": Placement(photo: a.id, origin: .suggested)], fits: [:])
         #expect(throws: CompositionError.alreadyPlaced(a.id)) { try book.addCollage(c2) }
         #expect(book.unplaced.map(\.id) == [b.id])
         #expect(throws: CompositionError.placedCannotBeExcluded(a.id)) { try book.exclude(a.id) }
@@ -212,7 +212,7 @@ struct CompositionTests {
         let store = BookStore(directory: dir)
         var book = Book(title: "Round trip", pageFormat: .a4Landscape)
         book.add([photo("a", 4, 3)])
-        try book.addCollage(Collage(templateID: "x/y", photoCount: 1,
+        try book.addCollage(Collage(templateID: "x/y", theme: ThemeRef(id: "x", version: "1.0"), photoCount: 1,
                                     placements: ["p1": Placement(photo: PhotoID(source: .folder, local: "a"), origin: .user)],
                                     fits: ["p1": Fit(scale: 1.2, centre: CGPoint(x: 0.3, y: 0.4), origin: .user)]))
         try store.save(book)

@@ -91,7 +91,7 @@ public enum FitSuggester {
 /// Makes a new Collage from a Template and Photos: Optional Slots for the photo count, the
 /// Matcher's Placements and suggested Fits.
 public enum CollageMaker {
-    public static func make(template: Template, format: PageFormat, palette: String = "default",
+    public static func make(template: Template, theme: ThemeRef, format: PageFormat, palette: String = "default",
                             photos: [MatchablePhoto]) throws -> Collage {
         let count = min(photos.count, template.photoCount.max)
         let resolved = try template.resolve(format: format, photoCount: count)
@@ -103,7 +103,7 @@ public enum CollageMaker {
             placements[slot] = Placement(photo: id, origin: .suggested)
             fits[slot] = FitSuggester.fit(for: byID[id]?.insight ?? Insight())
         }
-        return Collage(templateID: template.id, palette: palette, photoCount: count,
+        return Collage(templateID: template.id, theme: theme, palette: palette, photoCount: count,
                        placements: placements, fits: fits)
     }
 }

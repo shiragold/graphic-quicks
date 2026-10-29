@@ -13,6 +13,9 @@ public struct Collage: Codable, Hashable, Sendable, Identifiable {
     public var id: UUID
     /// `<theme>/<template>`.
     public var templateID: String
+    /// The Theme and the version the Collage was made with. Rendering uses exactly this
+    /// version while it is available, so a Theme update never silently changes the page.
+    public var theme: ThemeRef
     public var palette: String
     /// The photo count the Template was resolved for, which decides the Optional Slots.
     public var photoCount: Int
@@ -24,11 +27,12 @@ public struct Collage: Codable, Hashable, Sendable, Identifiable {
     public var texts: [String: String]
     public var status: CollageStatus
 
-    public init(id: UUID = UUID(), templateID: String, palette: String = "default", photoCount: Int,
+    public init(id: UUID = UUID(), templateID: String, theme: ThemeRef, palette: String = "default", photoCount: Int,
                 placements: [String: Placement], fits: [String: Fit], texts: [String: String] = [:],
                 status: CollageStatus = .draft) {
         self.id = id
         self.templateID = templateID
+        self.theme = theme
         self.palette = palette
         self.photoCount = photoCount
         self.placements = placements

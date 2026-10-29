@@ -47,6 +47,8 @@ enum Fixtures {
     static let a = Variant(theme: meadow, template: story, format: .a4Portrait)
     /// The same with the winter Palette.
     static let aWinter = Variant(theme: meadow, template: story, format: .a4Portrait, palette: winter)
+    /// meadow-arch@0.1.0/05-story, A4 portrait.
+    static let aVersioned = Variant(theme: meadow, template: story, format: .a4Portrait, themeVersion: ThemeVersionID("0.1.0")!)
     /// kraft-scrapbook/05-journal-entry, A4 portrait.
     static let b = Variant(theme: kraft, template: journal, format: .a4Portrait)
 
@@ -71,6 +73,7 @@ let everySignal: [UsageSignal] = {
         .suggestionsShown(variants: [a, b]),
         .templatePicked(collage: c, variant: a, source: .suggestion(position: 2)),
         .templatePicked(collage: c, variant: a, source: .search),
+        .templatePicked(collage: c, variant: Fixtures.aVersioned, source: .suggestion(position: 0)),
         .templateChanged(collage: c, from: a, to: b),
         .paletteChosen(collage: c, variant: Fixtures.aWinter),
         .remade(collage: c, variant: a),

@@ -3,6 +3,7 @@
   "id": "kraft-scrapbook",
   "name": "Kraft Scrapbook",
   "version": "0.1.0",
+  "templateFormat": "photo-album/template@1",
   "description": "Hand-made journal pages on kraft paper: taped polaroids, torn strips, ticket stubs and ink doodles.",
   "license": "Original work, CC0",
   "tags": ["scrapbook", "handmade", "washi tape", "polaroid", "doodles", "journal", "paper"],
