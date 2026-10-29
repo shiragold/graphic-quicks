@@ -23,14 +23,15 @@ public enum SmokeRun {
 
     public static func run(_ model: AppModel, month: String) async {
         var log: [String] = []
-        func note(_ s: String) { log.append("\(Date.now.formatted(.iso8601)) \(s)"); print("smoke:", s) }
         let base = (try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))!
         let out = base.appending(path: "PhotoAlbum/SmokeRun")
         try? FileManager.default.removeItem(at: out)
         try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
-        defer {
+        // Written after every step, so a run that waits (for the Photos prompt) shows where.
+        func note(_ s: String) {
+            log.append("\(Date.now.formatted(.iso8601)) \(s)")
+            print("smoke:", s)
             try? log.joined(separator: "\n").appending("\n").write(to: out.appending(path: "smoke.log"), atomically: true, encoding: .utf8)
-            print("smoke: done →", out.path)
         }
         do {
             try await pause(1)
