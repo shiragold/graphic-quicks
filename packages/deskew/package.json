@@ -1,7 +1,7 @@
 {
-  "name": "@graphic-quicks/photo-edit",
+  "name": "@graphic-quicks/deskew",
   "version": "0.1.0",
-  "description": "Pure OpenCV deskew/crop helpers extracted from graphic-quicks' photo-edit tool.",
+  "description": "Pure OpenCV deskew/crop helpers extracted from graphic-quicks' deskew tool.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

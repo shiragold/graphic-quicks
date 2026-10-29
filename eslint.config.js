@@ -2,7 +2,7 @@ import importX, { createNodeResolver } from 'eslint-plugin-import-x';
 import tseslint from 'typescript-eslint';
 
 // Tool boundaries are enforced structurally since the per-tool package split
-// (@graphic-quicks/photo-edit, /collage, /scale); no path-restriction rule needed.
+// (@graphic-quicks/deskew, /collage, /scale); no path-restriction rule needed.
 export default tseslint.config(
   {
     ignores: ['**/dist/**', '**/coverage/**'],

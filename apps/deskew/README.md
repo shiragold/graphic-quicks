@@ -1,11 +1,11 @@
-# photo-edit
+# deskew
 
 Browser-based auto-crop / deskew for scanned photos, powered by OpenCV.js.
 
 - UI: [index.html](./index.html)
-- Image-processing logic: [`@graphic-quicks/photo-edit`](../../packages/photo-edit/),
+- Image-processing logic: [`@graphic-quicks/deskew`](../../packages/deskew/),
   imported directly from its built output
-  (`../../packages/photo-edit/dist/index.js`) via `<script type="module">`.
+  (`../../packages/deskew/dist/index.js`) via `<script type="module">`.
 
 The app itself has no build step, but it loads ES modules over HTTP, so open
 it from a local server rather than `file://`. Build the package first, then
@@ -15,7 +15,7 @@ serve the repo root:
 pnpm install
 pnpm -r build
 pnpm serve
-# open http://localhost:3000/apps/photo-edit/
+# open http://localhost:3000/apps/deskew/
 ```
 
 OpenCV.js is the same `@techstark/opencv-js` 5.x package the tests use.
@@ -25,9 +25,9 @@ package function. That Promise is when the ambient `cv` global becomes available
 
 ## Tests
 
-The test suite lives with the package: `packages/photo-edit/tests/`.
+The test suite lives with the package: `packages/deskew/tests/`.
 
 ```bash
-pnpm --filter @graphic-quicks/photo-edit test
-pnpm --filter @graphic-quicks/photo-edit fixtures  # dump fixture PNGs for eyeballing
+pnpm --filter @graphic-quicks/deskew test
+pnpm --filter @graphic-quicks/deskew fixtures  # dump fixture PNGs for eyeballing
 ```
