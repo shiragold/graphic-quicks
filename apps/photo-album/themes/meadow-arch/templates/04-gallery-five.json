@@ -1,0 +1,62 @@
+{
+  "format": "photo-album/template@1",
+  "id": "meadow-arch/04-gallery-five",
+  "name": "Arch gallery",
+  "role": "page",
+  "baseFormat": "a4-portrait",
+  "photoCount": {"min": 4, "max": 5},
+  "tags": ["gallery", "arches", "rhythm", "many photos"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-cream"},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "script", "size": 100, "frame": {"x": 60, "y": 62, "w": 640, "h": 160}, "rotate": -3},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 22, "frame": {"x": 80, "y": 233, "w": 420, "h": 38}},
+    {"id": "sun-rays", "type": "asset", "asset": "sun-rays", "frame": {"x": 720, "y": 93, "w": 220, "h": 117}},
+    {"id": "rect", "type": "shape", "shape": "rect", "fill": "@shape", "frame": {"x": 0, "y": 539, "w": 1000, "h": 245}},
+    {"id": "p1", "type": "photo", "importance": 2, "orientation": "portrait", "frame": {"x": 70, "y": 352, "w": 240, "h": 394}, "mask": {"shape": "arch"}},
+    {"id": "p2", "type": "photo", "importance": 1, "orientation": "portrait", "focus": "faces", "frame": {"x": 380, "y": 319, "w": 240, "h": 425}, "mask": {"shape": "arch"}, "border": {"style": "none", "inset": 12, "insetColor": "@accent"}},
+    {"id": "p3", "type": "photo", "importance": 2, "orientation": "portrait", "frame": {"x": 690, "y": 352, "w": 240, "h": 394}, "mask": {"shape": "arch"}},
+    {"id": "p4", "type": "photo", "importance": 2, "orientation": "landscape", "frame": {"x": 70, "y": 848, "w": 440, "h": 330}, "mask": {"shape": "roundRect", "radius": 0.06}},
+    {"id": "p5", "type": "photo", "importance": 3, "orientation": "landscape", "optional": true, "frame": {"x": 545, "y": 848, "w": 385, "h": 330}, "mask": {"shape": "ellipse"}, "absentOverrides": {"p4": {"frame": {"x": 70, "y": 848, "w": 860, "h": 330}, "orientation": "panorama"}}},
+    {"id": "daisy", "type": "asset", "asset": "daisy", "frame": {"x": 40, "y": 1200, "w": 110, "h": 185}, "rotate": -6},
+    {"id": "fern-line", "type": "asset", "asset": "fern-line", "frame": {"x": 870, "y": 1189, "w": 95, "h": 190}, "rotate": 10},
+    {"id": "caption", "type": "text", "role": "caption", "bind": "{place}", "style": "body", "size": 34, "frame": {"x": 200, "y": 1258, "w": 600, "h": 64}, "align": "center"}
+  ],
+  "formats": {
+    "square": {
+      "status": "draft",
+      "nodes": {
+        "title": {"frame": {"x": 111, "y": 44, "w": 538, "h": 113}},
+        "date": {"frame": {"x": 113, "y": 165, "w": 353, "h": 27}},
+        "sun-rays": {"frame": {"x": 752, "y": 66, "w": 156, "h": 83}},
+        "rect": {"frame": {"x": 0, "y": 381, "w": 1000, "h": 173}},
+        "p1": {"frame": {"x": 89, "y": 249, "w": 202, "h": 279}},
+        "p2": {"frame": {"x": 399, "y": 226, "w": 202, "h": 301}},
+        "p3": {"frame": {"x": 709, "y": 249, "w": 202, "h": 279}},
+        "p4": {"frame": {"x": 105, "y": 600, "w": 370, "h": 233}},
+        "p5": {"frame": {"x": 576, "y": 600, "w": 324, "h": 233}},
+        "daisy": {"frame": {"x": 56, "y": 849, "w": 78, "h": 131}},
+        "fern-line": {"frame": {"x": 884, "y": 841, "w": 67, "h": 134}},
+        "caption": {"frame": {"x": 248, "y": 890, "w": 505, "h": 45}}
+      },
+      "absentOverrides": {"p5": {"p4": {"frame": {"x": 138, "y": 600, "w": 723, "h": 233}, "orientation": "panorama"}}}
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "title": {"frame": {"x": 217, "y": 44, "w": 640, "h": 113}},
+        "date": {"frame": {"x": 200, "y": 165, "w": 420, "h": 27}},
+        "sun-rays": {"frame": {"x": 1096, "y": 66, "w": 156, "h": 83}},
+        "rect": {"frame": {"x": 0, "y": 381, "w": 1414, "h": 173}},
+        "p1": {"frame": {"x": 149, "y": 249, "w": 240, "h": 279}},
+        "p2": {"frame": {"x": 587, "y": 226, "w": 240, "h": 301}},
+        "p3": {"frame": {"x": 1025, "y": 249, "w": 240, "h": 279}},
+        "p4": {"frame": {"x": 190, "y": 600, "w": 440, "h": 233}},
+        "p5": {"frame": {"x": 850, "y": 600, "w": 385, "h": 233}},
+        "daisy": {"frame": {"x": 95, "y": 849, "w": 78, "h": 131}},
+        "fern-line": {"frame": {"x": 1264, "y": 841, "w": 67, "h": 134}},
+        "caption": {"frame": {"x": 407, "y": 890, "w": 600, "h": 45}}
+      },
+      "absentOverrides": {"p5": {"p4": {"frame": {"x": 277, "y": 600, "w": 860, "h": 233}, "orientation": "panorama"}}}
+    }
+  }
+}

@@ -1,12 +1,24 @@
 # PhotoAlbumKit
 
-The local SwiftPM package that will hold photo-album's logic (see
-`research/tech-stack.md`, "Suggested project skeleton"). Module names follow
-`research/jargon.md`. So far it has two modules:
+The local SwiftPM package that holds photo-album's logic (see `research/tech-stack.md`,
+"Suggested project skeleton"). Module names follow `research/jargon.md`; the dependency
+direction is the one listed there.
 
-- **`Usage`**: the Usage Log, monthly Usage Reports, Preferences and Quick Rating sampling.
-  Foundation only.
-- **`UI`**: SwiftUI views. For now only `QuickRatingView`.
+| Module | Holds |
+|---|---|
+| `Catalog` | Theme and Template models (`photo-album/theme@1`, `photo-album/template@1`), Tokens and Palettes, Page Format overrides, Optional Slots with Absent Overrides, Bindings |
+| `Library` | `Photo`, `PhotoID`, `PhotoSource`, `PhotoKitSource` (Access, fetch by Period, thumbnails, Originals) |
+| `Grouping` | `Period`, `PeriodIndex` (months with counts), the transient `Group` |
+| `Insights` | `Insight`; `CentreFocusInsights` is a stub for the Vision step |
+| `Composition` | The `Book` aggregate (Book Photos, Excluded, Collages, the placed-once invariant), `Placement`, `Fit`, Default Text, `BookStore` (one JSON file per Book) |
+| `Suggestion` | `TemplateSuggester` (fits the photo count), the greedy `Matcher`, `FitSuggester`, `CollageMaker` |
+| `Rendering` | `CollageRenderer`: one Core Graphics renderer for preview and export; SVG-subset decorations, masks, borders, shadows, text fitting |
+| `Export` | PNG (300 DPI, DPI metadata) and PDF (one Collage per page, the Book PDF) |
+| `Usage` | The Usage Log, monthly Usage Reports, Preferences and Quick Rating sampling |
+| `UI` | SwiftUI flow: Book picker, Book overview, Add Photos (Access → month → Group → Template), Collage preview and export |
+
+The `parity` executable renders every Template × Page Format for the renderer parity check
+(`apps/photo-album/parity/README.md`).
 
 Minimum macOS 26, Swift 6 language mode.
 
@@ -17,7 +29,8 @@ swift build
 scripts/test.sh        # = `swift test` when Xcode is selected
 ```
 
-With Xcode selected, plain `swift test` works. With only the Command Line Tools,
+With Xcode selected, plain `swift test` works. Tests read the Themes from
+`apps/photo-album/themes/`. With only the Command Line Tools,
 SwiftPM cannot find Swift Testing by itself, and `swift test` fails with
 `no such module 'Testing'`. `scripts/test.sh` passes the CLT framework folder in that case.
 

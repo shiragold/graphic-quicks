@@ -1,0 +1,54 @@
+{
+  "format": "photo-album/template@1",
+  "id": "kraft-scrapbook/01-cover",
+  "name": "Taped hero cover",
+  "role": "cover",
+  "baseFormat": "square",
+  "photoCount": {"min": 1, "max": 1},
+  "tags": ["cover", "hero", "single photo", "landscape"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-kraft"},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "title", "size": 96, "frame": {"x": 70, "y": 50, "w": 860, "h": 140}, "rotate": -1.5, "align": "center"},
+    {"id": "sparkles", "type": "asset", "asset": "sparkles", "frame": {"x": 870, "y": 870, "w": 100, "h": 100}},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "landscape", "focus": "subject", "frame": {"x": 120, "y": 225, "w": 760, "h": 510}, "rotate": -2, "mask": {"shape": "rect"}, "border": {"style": "mat", "width": 0.035}, "shadow": "lifted"},
+    {"id": "washi-stripe", "type": "asset", "asset": "washi-stripe", "attachTo": "p1", "frame": {"x": -70, "y": -10, "w": 230, "h": 54}, "rotate": -38},
+    {"id": "washi-dots", "type": "asset", "asset": "washi-dots", "attachTo": "p1", "frame": {"x": 620, "y": -40, "w": 220, "h": 52}, "rotate": 28},
+    {"id": "sticker-sun", "type": "asset", "asset": "sticker-sun", "frame": {"x": 55, "y": 700, "w": 200, "h": 200}, "rotate": -12, "shadow": "soft"},
+    {"id": "postmark", "type": "asset", "asset": "postmark", "frame": {"x": 290, "y": 790, "w": 230, "h": 135}, "rotate": -8},
+    {"id": "place", "type": "text", "role": "caption", "bind": "{place}", "style": "caption", "size": 36, "frame": {"x": 330, "y": 905, "w": 300, "h": 60}, "rotate": -3, "align": "left"},
+    {"id": "tag", "type": "asset", "asset": "label-tag", "frame": {"x": 580, "y": 800, "w": 330, "h": 92}, "rotate": 5, "shadow": "soft", "fit": "stretch"},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 30, "attachTo": "tag", "frame": {"x": 10, "y": 0, "w": 270, "h": 92}, "align": "center"}
+  ],
+  "formats": {
+    "a4-portrait": {
+      "status": "draft",
+      "nodes": {
+        "title": {"frame": {"x": 70, "y": 86, "w": 860, "h": 166}},
+        "sparkles": {"frame": {"x": 870, "y": 1251, "w": 100, "h": 100}},
+        "p1": {"frame": {"x": 120, "y": 375, "w": 760, "h": 606}},
+        "sticker-sun": {"frame": {"x": 55, "y": 1031, "w": 200, "h": 200}},
+        "postmark": {"frame": {"x": 290, "y": 1145, "w": 230, "h": 135}},
+        "place": {"frame": {"x": 330, "y": 1286, "w": 300, "h": 71}},
+        "tag": {"frame": {"x": 580, "y": 1142, "w": 330, "h": 109}},
+        "washi-stripe": {"frame": {"x": -70, "y": -7, "w": 230, "h": 54}},
+        "washi-dots": {"frame": {"x": 620, "y": -43, "w": 220, "h": 52}},
+        "date": {"frame": {"x": 10, "y": 0, "w": 270, "h": 109}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "title": {"frame": {"x": 196, "y": 50, "w": 1023, "h": 140}},
+        "sparkles": {"frame": {"x": 1251, "y": 870, "w": 100, "h": 100}},
+        "p1": {"frame": {"x": 255, "y": 225, "w": 904, "h": 510}},
+        "sticker-sun": {"frame": {"x": 119, "y": 700, "w": 200, "h": 200}},
+        "postmark": {"frame": {"x": 458, "y": 790, "w": 230, "h": 135}},
+        "place": {"frame": {"x": 500, "y": 905, "w": 357, "h": 60}},
+        "tag": {"frame": {"x": 857, "y": 800, "w": 392, "h": 92}},
+        "washi-stripe": {"frame": {"x": -61, "y": -10, "w": 230, "h": 54}},
+        "washi-dots": {"frame": {"x": 758, "y": -40, "w": 220, "h": 52}},
+        "date": {"frame": {"x": 12, "y": 0, "w": 321, "h": 92}}
+      }
+    }
+  }
+}

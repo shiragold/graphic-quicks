@@ -1,0 +1,51 @@
+{
+  "format": "photo-album/template@1",
+  "id": "meadow-arch/01-arch-hero",
+  "name": "Arch hero",
+  "role": "cover",
+  "baseFormat": "a4-portrait",
+  "photoCount": {"min": 1, "max": 1},
+  "tags": ["cover", "arch", "portrait", "single photo", "whitespace"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-cream"},
+    {"id": "arch", "type": "shape", "shape": "arch", "fill": "@accent2", "opacity": 0.55, "frame": {"x": 130, "y": 211, "w": 520, "h": 936}},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "portrait", "focus": "faces", "frame": {"x": 90, "y": 160, "w": 520, "h": 936}, "mask": {"shape": "arch"}, "border": {"style": "none", "inset": 16, "insetColor": "@ink"}},
+    {"id": "circle", "type": "shape", "shape": "circle", "fill": "@sun", "opacity": 0.9, "frame": {"x": 700, "y": 196, "w": 150, "h": 150}},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "display", "size": 84, "maxLines": 3, "frame": {"x": 655, "y": 452, "w": 320, "h": 351}, "align": "left", "valign": "top"},
+    {"id": "rect", "type": "shape", "shape": "rect", "fill": "@ink", "frame": {"x": 660, "y": 860, "w": 70, "h": 2}},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 22, "frame": {"x": 660, "y": 884, "w": 320, "h": 43}},
+    {"id": "place", "type": "text", "role": "caption", "bind": "{place}", "style": "body", "size": 32, "frame": {"x": 660, "y": 935, "w": 320, "h": 53}},
+    {"id": "sprig-olive", "type": "asset", "asset": "sprig-olive", "frame": {"x": 500, "y": 1070, "w": 400, "h": 275}, "rotate": -12},
+    {"id": "wildflowers", "type": "asset", "asset": "wildflowers", "frame": {"x": 30, "y": 1069, "w": 130, "h": 260}}
+  ],
+  "formats": {
+    "square": {
+      "status": "draft",
+      "nodes": {
+        "arch": {"frame": {"x": 171, "y": 149, "w": 437, "h": 662}},
+        "p1": {"frame": {"x": 131, "y": 113, "w": 437, "h": 662}},
+        "circle": {"frame": {"x": 722, "y": 139, "w": 106, "h": 106}},
+        "title": {"frame": {"x": 680, "y": 320, "w": 269, "h": 248}},
+        "rect": {"frame": {"x": 666, "y": 608, "w": 59, "h": 1}},
+        "date": {"frame": {"x": 685, "y": 625, "w": 269, "h": 30}},
+        "place": {"frame": {"x": 685, "y": 661, "w": 269, "h": 37}},
+        "sprig-olive": {"frame": {"x": 559, "y": 757, "w": 283, "h": 194}},
+        "wildflowers": {"frame": {"x": 49, "y": 756, "w": 92, "h": 184}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "arch": {"frame": {"x": 291, "y": 149, "w": 520, "h": 662}},
+        "p1": {"frame": {"x": 235, "y": 113, "w": 520, "h": 662}},
+        "circle": {"frame": {"x": 1043, "y": 139, "w": 106, "h": 106}},
+        "title": {"frame": {"x": 992, "y": 320, "w": 320, "h": 248}},
+        "rect": {"frame": {"x": 948, "y": 608, "w": 70, "h": 1}},
+        "date": {"frame": {"x": 999, "y": 625, "w": 320, "h": 30}},
+        "place": {"frame": {"x": 999, "y": 661, "w": 320, "h": 37}},
+        "sprig-olive": {"frame": {"x": 848, "y": 757, "w": 283, "h": 194}},
+        "wildflowers": {"frame": {"x": 88, "y": 756, "w": 92, "h": 184}}
+      }
+    }
+  }
+}

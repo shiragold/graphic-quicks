@@ -1,0 +1,66 @@
+{
+  "format": "photo-album/template@1",
+  "id": "kraft-scrapbook/03-torn-strips",
+  "name": "Torn strips & ticket",
+  "role": "page",
+  "baseFormat": "square",
+  "photoCount": {"min": 4, "max": 4},
+  "tags": ["torn paper", "ticket", "circle", "travel"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-kraft"},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "title", "size": 80, "frame": {"x": 60, "y": 45, "w": 620, "h": 110}, "rotate": -2},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 26, "frame": {"x": 72, "y": 150, "w": 420, "h": 40}, "rotate": -2},
+    {"id": "sparkles", "type": "asset", "asset": "sparkles", "frame": {"x": 850, "y": 70, "w": 110, "h": 110}},
+    {"id": "strip", "type": "asset", "asset": "torn-strip", "frame": {"x": 25, "y": 225, "w": 950, "h": 310}, "rotate": -1.5, "shadow": "soft", "fit": "stretch"},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "landscape", "focus": "subject", "frame": {"x": 80, "y": 258, "w": 405, "h": 245}, "rotate": -2.5, "mask": {"shape": "path", "asset": "mask-torn-b"}, "shadow": "flat"},
+    {"id": "p2", "type": "photo", "importance": 2, "orientation": "landscape", "frame": {"x": 525, "y": 255, "w": 395, "h": 250}, "rotate": 1.2, "mask": {"shape": "rect"}, "border": {"style": "mat", "width": 0.03}, "shadow": "flat"},
+    {"id": "p4", "type": "photo", "importance": 2, "orientation": "portrait", "frame": {"x": 90, "y": 575, "w": 290, "h": 370}, "rotate": 3, "mask": {"shape": "path", "asset": "mask-torn-a"}, "shadow": "soft"},
+    {"id": "washi-dots", "type": "asset", "asset": "washi-dots", "attachTo": "p4", "frame": {"x": 60, "y": -26, "w": 170, "h": 44}, "rotate": -6},
+    {"id": "p3", "type": "photo", "importance": 2, "orientation": "square", "focus": "faces", "frame": {"x": 650, "y": 560, "w": 290, "h": 290}, "mask": {"shape": "circle"}, "border": {"style": "sticker", "width": 11}, "shadow": "soft"},
+    {"id": "doodle-squiggle", "type": "asset", "asset": "doodle-squiggle", "frame": {"x": 420, "y": 575, "w": 200, "h": 56}, "rotate": -4},
+    {"id": "ticket", "type": "asset", "asset": "ticket", "frame": {"x": 390, "y": 800, "w": 250, "h": 108}, "rotate": -8, "shadow": "soft"},
+    {"id": "caption", "type": "text", "role": "caption", "bind": "{date:MMM dd}", "style": "label", "size": 28, "override": {"color": "@card"}, "attachTo": "ticket", "frame": {"x": 12, "y": 0, "w": 160, "h": 108}, "align": "center"},
+    {"id": "decoration", "type": "text", "role": "decoration", "sample": "admit one", "style": "label", "size": 14, "override": {"color": "@card"}, "attachTo": "ticket", "frame": {"x": 178, "y": 41, "w": 108, "h": 26}, "rotate": -90, "align": "center"},
+    {"id": "caption-2", "type": "text", "role": "caption", "bind": "{place}", "style": "caption", "size": 34, "frame": {"x": 610, "y": 880, "w": 360, "h": 60}, "rotate": -3, "align": "center"}
+  ],
+  "formats": {
+    "a4-portrait": {
+      "status": "draft",
+      "nodes": {
+        "title": {"frame": {"x": 60, "y": 76, "w": 620, "h": 131}},
+        "date": {"frame": {"x": 72, "y": 217, "w": 420, "h": 48}},
+        "sparkles": {"frame": {"x": 850, "y": 122, "w": 110, "h": 110}},
+        "strip": {"frame": {"x": 25, "y": 353, "w": 950, "h": 369}},
+        "p1": {"frame": {"x": 80, "y": 392, "w": 405, "h": 291}},
+        "p2": {"frame": {"x": 525, "y": 389, "w": 395, "h": 297}},
+        "p4": {"frame": {"x": 90, "y": 855, "w": 290, "h": 440}},
+        "p3": {"frame": {"x": 650, "y": 852, "w": 290, "h": 290}},
+        "doodle-squiggle": {"frame": {"x": 420, "y": 825, "w": 200, "h": 56}},
+        "ticket": {"frame": {"x": 390, "y": 1154, "w": 250, "h": 108}},
+        "caption-2": {"frame": {"x": 610, "y": 1251, "w": 360, "h": 71}},
+        "washi-dots": {"frame": {"x": 60, "y": -27, "w": 170, "h": 44}},
+        "caption": {"frame": {"x": 12, "y": 0, "w": 160, "h": 108}},
+        "decoration": {"frame": {"x": 178, "y": 41, "w": 108, "h": 26}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "title": {"frame": {"x": 155, "y": 45, "w": 737, "h": 110}},
+        "date": {"frame": {"x": 149, "y": 150, "w": 499, "h": 40}},
+        "sparkles": {"frame": {"x": 1225, "y": 70, "w": 110, "h": 110}},
+        "strip": {"frame": {"x": 35, "y": 225, "w": 1343, "h": 310}},
+        "p1": {"frame": {"x": 159, "y": 258, "w": 482, "h": 245}},
+        "p2": {"frame": {"x": 787, "y": 255, "w": 470, "h": 250}},
+        "p4": {"frame": {"x": 160, "y": 575, "w": 345, "h": 370}},
+        "p3": {"frame": {"x": 979, "y": 560, "w": 290, "h": 290}},
+        "doodle-squiggle": {"frame": {"x": 635, "y": 575, "w": 200, "h": 56}},
+        "ticket": {"frame": {"x": 603, "y": 800, "w": 250, "h": 108}},
+        "caption-2": {"frame": {"x": 903, "y": 880, "w": 428, "h": 60}},
+        "washi-dots": {"frame": {"x": 88, "y": -26, "w": 170, "h": 44}},
+        "caption": {"frame": {"x": 12, "y": 0, "w": 160, "h": 108}},
+        "decoration": {"frame": {"x": 178, "y": 41, "w": 108, "h": 26}}
+      }
+    }
+  }
+}

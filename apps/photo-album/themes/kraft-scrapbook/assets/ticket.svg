@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 130">
+<path d="M10 0 H290 A10 10 0 0 0 300 10 V50 A15 15 0 0 0 300 80 V120 A10 10 0 0 0 290 130 H10 A10 10 0 0 0 0 120 V80 A15 15 0 0 0 0 50 V10 A10 10 0 0 0 10 0 Z" fill="@accent2"/>
+<line x1="222" y1="12" x2="222" y2="118" stroke="@card" stroke-width="3" stroke-dasharray="6 7" opacity="0.8"/>
+<rect x="14" y="14" width="196" height="102" rx="6" fill="none" stroke="@card" stroke-width="2" opacity="0.6"/>
+</svg>

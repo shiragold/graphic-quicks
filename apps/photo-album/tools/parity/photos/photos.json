@@ -1,0 +1,102 @@
+[
+  {
+    "id": "sunset-sea",
+    "w": 1600,
+    "h": 1200,
+    "focal": [
+      0.5,
+      0.55
+    ],
+    "faces": false
+  },
+  {
+    "id": "mountains",
+    "w": 1600,
+    "h": 1066,
+    "focal": [
+      0.45,
+      0.45
+    ],
+    "faces": false
+  },
+  {
+    "id": "forest-path",
+    "w": 1000,
+    "h": 1500,
+    "focal": [
+      0.5,
+      0.6
+    ],
+    "faces": false
+  },
+  {
+    "id": "beach-umbrella",
+    "w": 1200,
+    "h": 1600,
+    "focal": [
+      0.42,
+      0.5
+    ],
+    "faces": false
+  },
+  {
+    "id": "city-dusk",
+    "w": 1920,
+    "h": 1080,
+    "focal": [
+      0.55,
+      0.55
+    ],
+    "faces": false
+  },
+  {
+    "id": "flower-macro",
+    "w": 1200,
+    "h": 1200,
+    "focal": [
+      0.5,
+      0.5
+    ],
+    "faces": false
+  },
+  {
+    "id": "balloon",
+    "w": 1100,
+    "h": 1650,
+    "focal": [
+      0.5,
+      0.38
+    ],
+    "faces": false
+  },
+  {
+    "id": "lake-dock",
+    "w": 1600,
+    "h": 1200,
+    "focal": [
+      0.5,
+      0.6
+    ],
+    "faces": false
+  },
+  {
+    "id": "portrait",
+    "w": 1200,
+    "h": 1500,
+    "focal": [
+      0.5,
+      0.33
+    ],
+    "faces": true
+  },
+  {
+    "id": "picnic",
+    "w": 1200,
+    "h": 1200,
+    "focal": [
+      0.5,
+      0.5
+    ],
+    "faces": false
+  }
+]

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" preserveAspectRatio="none">
+<path d="M0 8 A8 8 0 0 1 8 0 H272 L320 45 L272 90 H8 A8 8 0 0 1 0 82 Z" fill="@card"/>
+<circle cx="282" cy="45" r="7" fill="@paper"/>
+</svg>

@@ -1,0 +1,56 @@
+{
+  "format": "photo-album/template@1",
+  "id": "kraft-scrapbook/05-journal-entry",
+  "name": "Journal entry",
+  "role": "page",
+  "baseFormat": "square",
+  "photoCount": {"min": 1, "max": 2},
+  "tags": ["journal", "story", "paragraph", "few photos", "text heavy"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-kraft"},
+    {"id": "card", "type": "asset", "asset": "grid-card", "frame": {"x": 465, "y": 70, "w": 470, "h": 860}, "rotate": 1.5, "shadow": "soft", "fit": "stretch"},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "title", "size": 62, "minSize": 40, "maxLines": 2, "frame": {"x": 505, "y": 110, "w": 395, "h": 150}, "rotate": 1.5, "valign": "top"},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 24, "frame": {"x": 510, "y": 268, "w": 390, "h": 40}, "rotate": 1.5},
+    {"id": "story", "type": "text", "role": "body", "bind": "{story}", "style": "caption", "size": 34, "minSize": 21, "maxLines": 16, "frame": {"x": 508, "y": 330, "w": 390, "h": 560}, "rotate": 1.5, "valign": "top", "placeholder": "Tell the story of these days"},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "portrait", "focus": "faces", "frame": {"x": 75, "y": 95, "w": 320, "h": 400}, "rotate": -5, "mask": {"shape": "rect"}, "border": {"style": "polaroid", "width": 0.07, "bottom": 0.24}, "shadow": "lifted"},
+    {"id": "tape-p1", "type": "asset", "asset": "tape-masking", "attachTo": "p1", "frame": {"x": 85, "y": -48, "w": 150, "h": 42}, "rotate": -3},
+    {"id": "p2", "type": "photo", "importance": 2, "orientation": "landscape", "optional": true, "frame": {"x": 85, "y": 640, "w": 330, "h": 230}, "rotate": 4, "mask": {"shape": "rect"}, "border": {"style": "mat", "width": 0.05}, "shadow": "soft", "absentOverrides": {"p1": {"frame": {"x": 70, "y": 150, "w": 340, "h": 560}}, "sun": {"frame": {"x": 300, "y": 760, "w": 140, "h": 140}}}},
+    {"id": "washi-p2", "type": "asset", "asset": "washi-dots", "attachTo": "p2", "frame": {"x": -45, "y": -10, "w": 130, "h": 38}, "rotate": -35},
+    {"id": "heart", "type": "asset", "asset": "doodle-heart", "frame": {"x": 395, "y": 560, "w": 70, "h": 70}, "rotate": 10},
+    {"id": "sun", "type": "asset", "asset": "sticker-sun", "frame": {"x": 345, "y": 840, "w": 120, "h": 120}, "rotate": -8}
+  ],
+  "formats": {
+    "a4-portrait": {
+      "status": "draft",
+      "nodes": {
+        "card": {"frame": {"x": 465, "y": 196, "w": 470, "h": 1023}},
+        "title": {"frame": {"x": 505, "y": 172, "w": 395, "h": 178}},
+        "date": {"frame": {"x": 510, "y": 383, "w": 390, "h": 48}},
+        "story": {"frame": {"x": 508, "y": 530, "w": 390, "h": 666}},
+        "p1": {"frame": {"x": 75, "y": 179, "w": 320, "h": 476}},
+        "p2": {"frame": {"x": 85, "y": 931, "w": 330, "h": 273}},
+        "heart": {"frame": {"x": 395, "y": 806, "w": 70, "h": 70}},
+        "sun": {"frame": {"x": 345, "y": 1213, "w": 120, "h": 120}},
+        "tape-p1": {"frame": {"x": 85, "y": -53, "w": 150, "h": 42}},
+        "washi-p2": {"frame": {"x": -45, "y": -8, "w": 130, "h": 38}}
+      },
+      "absentOverrides": {"p2": {"p1": {"frame": {"x": 70, "y": 275, "w": 340, "h": 666}}, "sun": {"frame": {"x": 300, "y": 1104, "w": 140, "h": 140}}}}
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "card": {"frame": {"x": 710, "y": 70, "w": 559, "h": 860}},
+        "title": {"frame": {"x": 758, "y": 110, "w": 470, "h": 150}},
+        "date": {"frame": {"x": 765, "y": 268, "w": 464, "h": 40}},
+        "story": {"frame": {"x": 762, "y": 330, "w": 464, "h": 560}},
+        "p1": {"frame": {"x": 142, "y": 95, "w": 381, "h": 400}},
+        "p2": {"frame": {"x": 157, "y": 640, "w": 392, "h": 230}},
+        "heart": {"frame": {"x": 573, "y": 560, "w": 70, "h": 70}},
+        "sun": {"frame": {"x": 513, "y": 840, "w": 120, "h": 120}},
+        "tape-p1": {"frame": {"x": 116, "y": -48, "w": 150, "h": 42}},
+        "washi-p2": {"frame": {"x": -41, "y": -10, "w": 130, "h": 38}}
+      },
+      "absentOverrides": {"p2": {"p1": {"frame": {"x": 137, "y": 150, "w": 404, "h": 560}}, "sun": {"frame": {"x": 453, "y": 760, "w": 140, "h": 140}}}}
+    }
+  }
+}

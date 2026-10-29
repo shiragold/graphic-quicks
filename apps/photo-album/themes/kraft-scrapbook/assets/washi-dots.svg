@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60">
+<defs><pattern id="p" width="26" height="26" patternUnits="userSpaceOnUse">
+  <rect width="26" height="26" fill="@accent2"/><circle cx="6" cy="6" r="3.4" fill="@card"/><circle cx="19" cy="19" r="3.4" fill="@card"/></pattern></defs>
+<path d="M5.5182 0 L6.1819 10 L1.7581 20 L4.9854 30 L0.6811 40 L4.7373 50 L5.7608 60 L256.3352 60 L252.755 50 L258.1646 40 L253.7611 30 L254.0751 20 L254.7155 10 L259.8894 0 Z" fill="url(#p)" opacity="0.82"/>
+</svg>

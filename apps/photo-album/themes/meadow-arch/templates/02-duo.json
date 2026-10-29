@@ -1,0 +1,51 @@
+{
+  "format": "photo-album/template@1",
+  "id": "meadow-arch/02-duo",
+  "name": "Circle & arch duo",
+  "role": "page",
+  "baseFormat": "a4-portrait",
+  "photoCount": {"min": 2, "max": 2},
+  "tags": ["duo", "circle", "arch", "organic", "overlap"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-cream"},
+    {"id": "path", "type": "shape", "shape": "path", "asset": "mask-blob-b", "fill": "@shape", "frame": {"x": 40, "y": 123, "w": 680, "h": 681}},
+    {"id": "confetti", "type": "asset", "asset": "confetti", "opacity": 0.8, "frame": {"x": 620, "y": 145, "w": 320, "h": 320}},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "square", "focus": "subject", "frame": {"x": 110, "y": 204, "w": 520, "h": 520}, "mask": {"shape": "circle"}},
+    {"id": "sun-rays", "type": "asset", "asset": "sun-rays", "frame": {"x": 630, "y": 530, "w": 200, "h": 107}},
+    {"id": "p2", "type": "photo", "importance": 2, "orientation": "portrait", "frame": {"x": 540, "y": 658, "w": 380, "h": 596}, "mask": {"shape": "arch"}, "border": {"style": "sticker", "color": "@card", "width": 12}, "shadow": "soft"},
+    {"id": "fern-line", "type": "asset", "asset": "fern-line", "frame": {"x": 860, "y": 139, "w": 110, "h": 220}, "rotate": 15},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "script", "size": 104, "maxLines": 2, "frame": {"x": 55, "y": 867, "w": 470, "h": 245}, "rotate": -4},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 22, "frame": {"x": 70, "y": 1133, "w": 420, "h": 43}},
+    {"id": "daisy", "type": "asset", "asset": "daisy", "frame": {"x": 400, "y": 1167, "w": 120, "h": 200}, "rotate": -8}
+  ],
+  "formats": {
+    "square": {
+      "status": "draft",
+      "nodes": {
+        "path": {"frame": {"x": 94, "y": 87, "w": 572, "h": 482}},
+        "confetti": {"frame": {"x": 667, "y": 103, "w": 226, "h": 226}},
+        "p1": {"frame": {"x": 186, "y": 144, "w": 368, "h": 368}},
+        "sun-rays": {"frame": {"x": 659, "y": 375, "w": 141, "h": 76}},
+        "p2": {"frame": {"x": 570, "y": 465, "w": 320, "h": 421}},
+        "fern-line": {"frame": {"x": 876, "y": 98, "w": 78, "h": 156}},
+        "title": {"frame": {"x": 92, "y": 613, "w": 395, "h": 173}},
+        "date": {"frame": {"x": 103, "y": 801, "w": 353, "h": 30}},
+        "daisy": {"frame": {"x": 418, "y": 825, "w": 85, "h": 141}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "path": {"frame": {"x": 197, "y": 87, "w": 680, "h": 482}},
+        "confetti": {"frame": {"x": 990, "y": 103, "w": 226, "h": 226}},
+        "p1": {"frame": {"x": 339, "y": 144, "w": 368, "h": 368}},
+        "sun-rays": {"frame": {"x": 961, "y": 375, "w": 141, "h": 76}},
+        "p2": {"frame": {"x": 842, "y": 465, "w": 380, "h": 421}},
+        "fern-line": {"frame": {"x": 1255, "y": 98, "w": 78, "h": 156}},
+        "title": {"frame": {"x": 175, "y": 613, "w": 470, "h": 173}},
+        "date": {"frame": {"x": 186, "y": 801, "w": 420, "h": 30}},
+        "daisy": {"frame": {"x": 608, "y": 825, "w": 85, "h": 141}}
+      }
+    }
+  }
+}

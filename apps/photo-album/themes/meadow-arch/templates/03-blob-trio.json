@@ -1,0 +1,51 @@
+{
+  "format": "photo-album/template@1",
+  "id": "meadow-arch/03-blob-trio",
+  "name": "Blob trio",
+  "role": "page",
+  "baseFormat": "a4-portrait",
+  "photoCount": {"min": 3, "max": 3},
+  "tags": ["blob", "organic", "colour block", "hero"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-cream"},
+    {"id": "rect", "type": "shape", "shape": "rect", "fill": "@shape", "frame": {"x": 0, "y": 15, "w": 1000, "h": 468}},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "display", "size": 78, "frame": {"x": 80, "y": 83, "w": 840, "h": 117}, "align": "center"},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 22, "frame": {"x": 80, "y": 211, "w": 840, "h": 43}, "align": "center"},
+    {"id": "sprig-olive", "type": "asset", "asset": "sprig-olive", "frame": {"x": 700, "y": 256, "w": 290, "h": 200}, "rotate": 12},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "landscape", "focus": "subject", "frame": {"x": 150, "y": 324, "w": 700, "h": 596}, "mask": {"shape": "path", "asset": "mask-blob-a"}, "shadow": "soft"},
+    {"id": "wildflowers", "type": "asset", "asset": "wildflowers", "frame": {"x": 25, "y": 652, "w": 140, "h": 280}},
+    {"id": "p2", "type": "photo", "importance": 2, "orientation": "portrait", "frame": {"x": 85, "y": 940, "w": 290, "h": 383}, "rotate": -3, "mask": {"shape": "roundRect", "radius": 0.12}, "border": {"style": "sticker", "color": "@card", "width": 9}, "shadow": "soft"},
+    {"id": "p3", "type": "photo", "importance": 2, "orientation": "landscape", "frame": {"x": 440, "y": 1017, "w": 470, "h": 319}, "rotate": 2, "mask": {"shape": "roundRect", "radius": 0.1}, "border": {"style": "sticker", "color": "@card", "width": 9}, "shadow": "soft"},
+    {"id": "caption", "type": "text", "role": "caption", "bind": "{place}", "style": "body", "size": 30, "frame": {"x": 600, "y": 952, "w": 320, "h": 47}, "align": "right"}
+  ],
+  "formats": {
+    "square": {
+      "status": "draft",
+      "nodes": {
+        "rect": {"frame": {"x": 0, "y": 11, "w": 1000, "h": 331}},
+        "title": {"frame": {"x": 147, "y": 59, "w": 706, "h": 83}},
+        "date": {"frame": {"x": 147, "y": 149, "w": 706, "h": 30}},
+        "sprig-olive": {"frame": {"x": 742, "y": 181, "w": 205, "h": 141}},
+        "p1": {"frame": {"x": 206, "y": 229, "w": 589, "h": 421}},
+        "wildflowers": {"frame": {"x": 45, "y": 461, "w": 99, "h": 198}},
+        "p2": {"frame": {"x": 108, "y": 665, "w": 244, "h": 271}},
+        "p3": {"frame": {"x": 477, "y": 719, "w": 395, "h": 226}},
+        "caption": {"frame": {"x": 625, "y": 673, "w": 269, "h": 33}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "rect": {"frame": {"x": 0, "y": 11, "w": 1414, "h": 331}},
+        "title": {"frame": {"x": 287, "y": 59, "w": 840, "h": 83}},
+        "date": {"frame": {"x": 287, "y": 149, "w": 840, "h": 30}},
+        "sprig-olive": {"frame": {"x": 1092, "y": 181, "w": 205, "h": 141}},
+        "p1": {"frame": {"x": 357, "y": 229, "w": 700, "h": 421}},
+        "wildflowers": {"frame": {"x": 85, "y": 461, "w": 99, "h": 198}},
+        "p2": {"frame": {"x": 180, "y": 665, "w": 290, "h": 271}},
+        "p3": {"frame": {"x": 719, "y": 719, "w": 470, "h": 226}},
+        "caption": {"frame": {"x": 915, "y": 673, "w": 320, "h": 33}}
+      }
+    }
+  }
+}

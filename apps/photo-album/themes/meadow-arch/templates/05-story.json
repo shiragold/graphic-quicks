@@ -1,0 +1,54 @@
+{
+  "format": "photo-album/template@1",
+  "id": "meadow-arch/05-story",
+  "name": "Story page",
+  "role": "page",
+  "baseFormat": "a4-portrait",
+  "photoCount": {"min": 1, "max": 1},
+  "tags": ["story", "paragraph", "title and subtitle", "single photo", "text heavy"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-cream"},
+    {"id": "arch-shadow", "type": "shape", "shape": "arch", "fill": "@accent2", "opacity": 0.5, "frame": {"x": 150, "y": 135, "w": 400, "h": 580}},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "portrait", "focus": "faces", "frame": {"x": 115, "y": 100, "w": 400, "h": 580}, "mask": {"shape": "arch"}, "border": {"style": "none", "inset": 14, "insetColor": "@ink"}},
+    {"id": "sun", "type": "shape", "shape": "circle", "fill": "@sun", "opacity": 0.9, "frame": {"x": 640, "y": 140, "w": 120, "h": 120}},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "display", "size": 76, "minSize": 46, "maxLines": 4, "frame": {"x": 590, "y": 300, "w": 350, "h": 300}, "valign": "top"},
+    {"id": "rule", "type": "shape", "shape": "rect", "fill": "@ink", "frame": {"x": 594, "y": 618, "w": 70, "h": 2}},
+    {"id": "subtitle", "type": "text", "role": "subtitle", "bind": "{subtitle}", "style": "body", "size": 34, "minSize": 24, "maxLines": 3, "frame": {"x": 592, "y": 635, "w": 350, "h": 125}, "valign": "top"},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMMM yyyy}", "style": "label", "size": 22, "frame": {"x": 115, "y": 755, "w": 420, "h": 36}},
+    {"id": "story", "type": "text", "role": "body", "bind": "{story}", "style": "body", "override": {"italic": false, "lineHeight": 1.35}, "size": 36, "minSize": 25, "maxLines": 13, "frame": {"x": 115, "y": 815, "w": 770, "h": 430}, "valign": "top", "placeholder": "Tell the story of these days"},
+    {"id": "sprig", "type": "asset", "asset": "sprig-olive", "frame": {"x": 690, "y": 1225, "w": 260, "h": 180}, "rotate": -10},
+    {"id": "wildflowers", "type": "asset", "asset": "wildflowers", "frame": {"x": 40, "y": 1225, "w": 90, "h": 180}}
+  ],
+  "formats": {
+    "square": {
+      "status": "draft",
+      "nodes": {
+        "arch-shadow": {"frame": {"x": 182, "y": 95, "w": 336, "h": 410}},
+        "p1": {"frame": {"x": 147, "y": 71, "w": 336, "h": 410}},
+        "sun": {"frame": {"x": 658, "y": 99, "w": 85, "h": 85}},
+        "title": {"frame": {"x": 618, "y": 212, "w": 294, "h": 212}},
+        "rule": {"frame": {"x": 600, "y": 437, "w": 59, "h": 1}},
+        "subtitle": {"frame": {"x": 620, "y": 449, "w": 294, "h": 88}},
+        "date": {"frame": {"x": 148, "y": 534, "w": 353, "h": 25}},
+        "story": {"frame": {"x": 176, "y": 576, "w": 648, "h": 304}},
+        "sprig": {"frame": {"x": 728, "y": 866, "w": 184, "h": 127}},
+        "wildflowers": {"frame": {"x": 53, "y": 866, "w": 64, "h": 127}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "arch-shadow": {"frame": {"x": 295, "y": 95, "w": 400, "h": 410}},
+        "p1": {"frame": {"x": 245, "y": 71, "w": 400, "h": 410}},
+        "sun": {"frame": {"x": 947, "y": 99, "w": 85, "h": 85}},
+        "title": {"frame": {"x": 907, "y": 212, "w": 350, "h": 212}},
+        "rule": {"frame": {"x": 854, "y": 437, "w": 70, "h": 1}},
+        "subtitle": {"frame": {"x": 910, "y": 449, "w": 350, "h": 88}},
+        "date": {"frame": {"x": 250, "y": 534, "w": 420, "h": 25}},
+        "story": {"frame": {"x": 322, "y": 576, "w": 770, "h": 304}},
+        "sprig": {"frame": {"x": 1068, "y": 866, "w": 184, "h": 127}},
+        "wildflowers": {"frame": {"x": 88, "y": 866, "w": 64, "h": 127}}
+      }
+    }
+  }
+}

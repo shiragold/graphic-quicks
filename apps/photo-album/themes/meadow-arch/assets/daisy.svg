@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 330">
+<path d="M100 140 C95 210 108 260 98 325" fill="none" stroke="@leaf" stroke-width="4"/>
+<path d="M99 250 C70 230 50 240 40 215 C70 205 90 220 99 250 Z" fill="@leaf"/>
+<g fill="@card" stroke="@ink" stroke-width="2.5"><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(0 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(36 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(72 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(108 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(144 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(180 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(216 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(252 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(288 100 100)"/><ellipse cx="100" cy="58" rx="15" ry="38" transform="rotate(324 100 100)"/></g><circle cx="100" cy="100" r="22" fill="@sun" stroke="@ink" stroke-width="2.5"/>
+</svg>

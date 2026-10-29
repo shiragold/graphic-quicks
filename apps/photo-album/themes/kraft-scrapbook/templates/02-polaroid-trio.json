@@ -1,0 +1,63 @@
+{
+  "format": "photo-album/template@1",
+  "id": "kraft-scrapbook/02-polaroid-trio",
+  "name": "Polaroid trio",
+  "role": "page",
+  "baseFormat": "square",
+  "photoCount": {"min": 3, "max": 3},
+  "tags": ["polaroid", "scattered", "captions", "mixed orientation"],
+  "layers": [
+    {"type": "background", "fill": "@paper", "asset": "paper-kraft"},
+    {"id": "grid-card", "type": "asset", "asset": "grid-card", "frame": {"x": 70, "y": 80, "w": 590, "h": 760}, "rotate": -3, "shadow": "soft", "fit": "stretch"},
+    {"id": "doodle-star", "type": "asset", "asset": "doodle-star", "frame": {"x": 85, "y": 640, "w": 110, "h": 110}, "rotate": -10},
+    {"id": "p1", "type": "photo", "importance": 1, "orientation": "portrait", "focus": "faces", "frame": {"x": 130, "y": 140, "w": 320, "h": 400}, "rotate": -6, "mask": {"shape": "rect"}, "border": {"style": "polaroid", "width": 0.07, "bottom": 0.27}, "shadow": "lifted"},
+    {"id": "tape-masking", "type": "asset", "asset": "tape-masking", "attachTo": "p1", "frame": {"x": 90, "y": -50, "w": 150, "h": 42}, "rotate": 4},
+    {"id": "caption", "type": "text", "role": "caption", "bind": "{place}", "style": "caption", "size": 34, "attachTo": "p1", "frame": {"x": 10, "y": 408, "w": 250, "h": 70}, "align": "center"},
+    {"id": "p2", "type": "photo", "importance": 2, "orientation": "square", "frame": {"x": 530, "y": 105, "w": 320, "h": 320}, "rotate": 7, "mask": {"shape": "rect"}, "border": {"style": "polaroid", "width": 0.07, "bottom": 0.27}, "shadow": "lifted"},
+    {"id": "washi-stripe", "type": "asset", "asset": "washi-stripe", "attachTo": "p2", "frame": {"x": -60, "y": -20, "w": 180, "h": 44}, "rotate": -40},
+    {"id": "caption-2", "type": "text", "role": "caption", "sample": "golden hour", "style": "caption", "size": 34, "attachTo": "p2", "frame": {"x": 0, "y": 330, "w": 320, "h": 70}, "align": "center"},
+    {"id": "p3", "type": "photo", "importance": 2, "orientation": "landscape", "frame": {"x": 470, "y": 585, "w": 400, "h": 290}, "rotate": -2.5, "mask": {"shape": "rect"}, "border": {"style": "polaroid", "width": 0.06, "bottom": 0.24}, "shadow": "lifted"},
+    {"id": "paperclip", "type": "asset", "asset": "paperclip", "attachTo": "p3", "frame": {"x": 340, "y": -55, "w": 48, "h": 150}, "rotate": 8},
+    {"id": "date", "type": "text", "role": "date", "bind": "{date:MMM dd}", "style": "label", "size": 26, "attachTo": "p3", "frame": {"x": 0, "y": 300, "w": 400, "h": 60}, "align": "center"},
+    {"id": "title", "type": "text", "role": "title", "bind": "{title}", "style": "title", "size": 64, "maxLines": 2, "frame": {"x": 50, "y": 850, "w": 340, "h": 130}, "rotate": -4, "align": "left"},
+    {"id": "doodle-heart", "type": "asset", "asset": "doodle-heart", "frame": {"x": 870, "y": 470, "w": 90, "h": 90}, "rotate": 12}
+  ],
+  "formats": {
+    "a4-portrait": {
+      "status": "draft",
+      "nodes": {
+        "grid-card": {"frame": {"x": 70, "y": 199, "w": 590, "h": 904}},
+        "doodle-star": {"frame": {"x": 85, "y": 928, "w": 110, "h": 110}},
+        "p1": {"frame": {"x": 130, "y": 243, "w": 320, "h": 476}},
+        "p2": {"frame": {"x": 530, "y": 184, "w": 320, "h": 381}},
+        "p3": {"frame": {"x": 470, "y": 860, "w": 400, "h": 345}},
+        "title": {"frame": {"x": 50, "y": 1217, "w": 340, "h": 155}},
+        "doodle-heart": {"frame": {"x": 870, "y": 683, "w": 90, "h": 90}},
+        "tape-masking": {"frame": {"x": 90, "y": -56, "w": 150, "h": 42}},
+        "caption": {"frame": {"x": 10, "y": 486, "w": 250, "h": 83}},
+        "washi-stripe": {"frame": {"x": -60, "y": -20, "w": 180, "h": 44}},
+        "caption-2": {"frame": {"x": 0, "y": 393, "w": 320, "h": 83}},
+        "paperclip": {"frame": {"x": 340, "y": -51, "w": 48, "h": 150}},
+        "date": {"frame": {"x": 0, "y": 357, "w": 400, "h": 71}}
+      }
+    },
+    "a4-landscape": {
+      "status": "draft",
+      "nodes": {
+        "grid-card": {"frame": {"x": 165, "y": 80, "w": 702, "h": 760}},
+        "doodle-star": {"frame": {"x": 143, "y": 640, "w": 110, "h": 110}},
+        "p1": {"frame": {"x": 220, "y": 140, "w": 381, "h": 400}},
+        "p2": {"frame": {"x": 785, "y": 105, "w": 381, "h": 320}},
+        "p3": {"frame": {"x": 710, "y": 585, "w": 476, "h": 290}},
+        "title": {"frame": {"x": 109, "y": 850, "w": 404, "h": 130}},
+        "doodle-heart": {"frame": {"x": 1249, "y": 470, "w": 90, "h": 90}},
+        "tape-masking": {"frame": {"x": 121, "y": -50, "w": 150, "h": 42}},
+        "caption": {"frame": {"x": 12, "y": 408, "w": 298, "h": 70}},
+        "washi-stripe": {"frame": {"x": -54, "y": -20, "w": 180, "h": 44}},
+        "caption-2": {"frame": {"x": 0, "y": 330, "w": 381, "h": 70}},
+        "paperclip": {"frame": {"x": 409, "y": -55, "w": 48, "h": 150}},
+        "date": {"frame": {"x": 0, "y": 300, "w": 476, "h": 60}}
+      }
+    }
+  }
+}

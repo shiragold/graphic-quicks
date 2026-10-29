@@ -1,0 +1,65 @@
+{
+  "format": "photo-album/theme@1",
+  "id": "kraft-scrapbook",
+  "name": "Kraft Scrapbook",
+  "version": "0.1.0",
+  "description": "Hand-made journal pages on kraft paper: taped polaroids, torn strips, ticket stubs and ink doodles.",
+  "license": "Original work, CC0",
+  "tags": ["scrapbook", "handmade", "washi tape", "polaroid", "doodles", "journal", "paper"],
+  "mood": ["playful", "warm", "nostalgic"],
+  "seasons": ["summer", "spring", "autumn"],
+  "occasions": ["travel", "weekend", "family", "friends", "camp"],
+  "palettes": {
+    "default": {
+      "paper": "#c8a477", "card": "#fffdf6", "ink": "#3a2c25", "line": "#8fb8dc",
+      "accent": "#e2694f", "accent2": "#2a8f86", "tape": "#f2d68e", "sun": "#f5b94c"
+    },
+    "berry": {
+      "paper": "#d7b3a6", "accent": "#b5487a", "accent2": "#5b5fa8", "tape": "#f6c9d6", "sun": "#f3a6a0"
+    }
+  },
+  "typography": {
+    "title":   { "family": ["Caveat", "Bradley Hand", "cursive"], "weight": 700, "color": "@ink", "avgCharWidth": 0.46 },
+    "caption": { "family": ["Gochi Hand", "Noteworthy", "cursive"], "weight": 400, "color": "@ink", "avgCharWidth": 0.44 },
+    "label":   { "family": ["Courier Prime", "American Typewriter", "monospace"], "weight": 400, "color": "@ink",
+                 "letterSpacing": 0.12, "transform": "uppercase", "avgCharWidth": 0.58 }
+  },
+  "fonts": [
+    {"family": "Caveat", "file": "fonts/Caveat[wght].ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/caveat/Caveat%5Bwght%5D.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-Caveat.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/caveat/OFL.txt"},
+    {"family": "Gochi Hand", "file": "fonts/GochiHand-Regular.ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/gochihand/GochiHand-Regular.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-GochiHand.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/gochihand/OFL.txt"},
+    {"family": "Courier Prime", "file": "fonts/CourierPrime-Regular.ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/courierprime/CourierPrime-Regular.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-CourierPrime.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/courierprime/OFL.txt"}
+  ],
+  "sampleData": {
+    "title": "Summer at the Lake", "subtitle": "a week by the water", "place": "lakeside cabin", "date": "2026-07-12",
+    "section1": "Saturday", "section2": "Sunday",
+    "story": "We rowed out before breakfast, ate peaches on the dock and stayed in the water until our fingers wrinkled. The evenings were for card games, mosquito bites and one very ambitious campfire."
+  },
+  "assets": {
+    "paper-kraft": "assets/textures/paper-kraft.png",
+    "grid-card": "assets/grid-card.svg",
+    "washi-stripe": "assets/washi-stripe.svg",
+    "washi-dots": "assets/washi-dots.svg",
+    "tape-masking": "assets/tape-masking.svg",
+    "torn-strip": "assets/torn-strip.svg",
+    "ticket": "assets/ticket.svg",
+    "postmark": "assets/postmark.svg",
+    "label-tag": "assets/label-tag.svg",
+    "doodle-star": "assets/doodle-star.svg",
+    "doodle-heart": "assets/doodle-heart.svg",
+    "doodle-arrow": "assets/doodle-arrow.svg",
+    "doodle-squiggle": "assets/doodle-squiggle.svg",
+    "sparkles": "assets/sparkles.svg",
+    "paperclip": "assets/paperclip.svg",
+    "sticker-sun": "assets/sticker-sun.svg",
+    "mask-torn-a": "assets/masks/torn-a.svg",
+    "mask-torn-b": "assets/masks/torn-b.svg"
+  },
+  "templates": [
+    "templates/01-cover.json",
+    "templates/02-polaroid-trio.json",
+    "templates/03-torn-strips.json",
+    "templates/04-notebook-grid.json",
+    "templates/05-journal-entry.json",
+    "templates/06-two-days.json"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "format": "photo-album/theme@1",
+  "id": "meadow-arch",
+  "name": "Meadow Arch",
+  "version": "0.1.0",
+  "description": "Calm editorial pages: arch, circle and blob crops, sun discs, line-art botanicals and a high-contrast serif.",
+  "license": "Original work, CC0",
+  "tags": ["minimal", "editorial", "arch", "botanical", "organic shapes", "boho"],
+  "mood": ["calm", "elegant", "airy"],
+  "seasons": ["spring", "summer"],
+  "occasions": ["family", "garden", "wedding", "baby", "everyday"],
+  "palettes": {
+    "default": {
+      "paper": "#f4ede1", "card": "#fffaf2", "ink": "#3b3a33", "shape": "#eadbc7",
+      "accent": "#c46d4a", "accent2": "#e6b8a6", "leaf": "#7c8b62", "leaf2": "#a9b48c", "sun": "#e3b453"
+    },
+    "winter": {
+      "paper": "#eef1f3", "card": "#ffffff", "ink": "#25303f", "shape": "#d9e2ea",
+      "accent": "#4e6c8e", "accent2": "#b7c8da", "leaf": "#56767a", "leaf2": "#9db4b2", "sun": "#d6c08a"
+    }
+  },
+  "typography": {
+    "display": { "family": ["Playfair Display", "Didot", "serif"], "weight": 400, "color": "@ink", "avgCharWidth": 0.58 },
+    "script":  { "family": ["Pinyon Script", "Snell Roundhand", "cursive"], "weight": 400, "color": "@accent", "avgCharWidth": 0.42 },
+    "label":   { "family": ["Jost", "Avenir Next", "sans-serif"], "weight": 500, "color": "@ink",
+                 "letterSpacing": 0.28, "transform": "uppercase", "avgCharWidth": 0.62 },
+    "body":    { "family": ["Cormorant Garamond", "Hoefler Text", "serif"], "weight": 400, "italic": true, "color": "@ink", "avgCharWidth": 0.42 }
+  },
+  "fonts": [
+    {"family": "Playfair Display", "file": "fonts/PlayfairDisplay[wght].ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-PlayfairDisplay.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/OFL.txt"},
+    {"family": "Pinyon Script", "file": "fonts/PinyonScript-Regular.ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/pinyonscript/PinyonScript-Regular.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-PinyonScript.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/pinyonscript/OFL.txt"},
+    {"family": "Jost", "file": "fonts/Jost[wght].ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/jost/Jost%5Bwght%5D.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-Jost.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/jost/OFL.txt"},
+    {"family": "Cormorant Garamond", "file": "fonts/CormorantGaramond-Italic[wght].ttf", "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/cormorantgaramond/CormorantGaramond-Italic%5Bwght%5D.ttf", "license": "OFL-1.1", "licenseFile": "fonts/OFL-CormorantGaramond.txt", "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/cormorantgaramond/OFL.txt", "italic": true}
+  ],
+  "sampleData": {
+    "title": "Summer at the Lake", "subtitle": "a week by the water", "place": "lakeside cabin", "date": "2026-07-12",
+    "section1": "Saturday", "section2": "Sunday",
+    "story": "A slow week of morning swims, long lunches under the oak and evenings that never seemed to end. We read, we napped, we counted herons, and nobody looked at a clock."
+  },
+  "assets": {
+    "paper-cream": "assets/textures/paper-cream.png",
+    "sprig-olive": "assets/sprig-olive.svg",
+    "fern-line": "assets/fern-line.svg",
+    "daisy": "assets/daisy.svg",
+    "wildflowers": "assets/wildflowers.svg",
+    "sun-rays": "assets/sun-rays.svg",
+    "confetti": "assets/confetti.svg",
+    "mask-blob-a": "assets/masks/blob-a.svg",
+    "mask-blob-b": "assets/masks/blob-b.svg",
+    "mask-blob-c": "assets/masks/blob-c.svg"
+  },
+  "templates": [
+    "templates/01-arch-hero.json",
+    "templates/02-duo.json",
+    "templates/03-blob-trio.json",
+    "templates/04-gallery-five.json",
+    "templates/05-story.json",
+    "templates/06-two-chapters.json"
+  ]
+}
