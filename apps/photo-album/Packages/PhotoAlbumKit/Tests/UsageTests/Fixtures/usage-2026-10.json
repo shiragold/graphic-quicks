@@ -1,0 +1,29 @@
+{
+  "period": "2026-10",
+  "appVersion": "1.2.0",
+  "rows": [
+    {
+      "theme": "kraft-scrapbook", "template": "05-journal-entry", "format": "a4-portrait", "palette": "default",
+      "suggested": 2, "picked": 1, "searched": 0, "made": 2, "kept": 1, "replaced": 0, "removed": 1,
+      "remade": 0, "optionalEmpty": 0, "textOverridden": {}, "ratingUp": 1, "ratingDown": 0
+    },
+    {
+      "theme": "meadow-arch", "template": "05-story", "format": "a4-portrait", "palette": "default",
+      "suggested": 2, "picked": 2, "searched": 1, "made": 3, "kept": 1, "replaced": 1, "removed": 0,
+      "remade": 1, "optionalEmpty": 1, "textOverridden": { "title": 1, "subtitle": 1 },
+      "ratingUp": 0, "ratingDown": 0
+    },
+    {
+      "theme": "meadow-arch", "template": "05-story", "format": "a4-portrait", "palette": "winter",
+      "suggested": 0, "picked": 0, "searched": 0, "made": 0, "kept": 1, "replaced": 0, "removed": 0,
+      "remade": 0, "optionalEmpty": 0, "textOverridden": {}, "ratingUp": 0, "ratingDown": 1
+    }
+  ],
+  "replacedBy": [
+    { "from": "meadow-arch/05-story", "to": "kraft-scrapbook/05-journal-entry", "count": 1, "themeChanged": true }
+  ],
+  "variants": {
+    "palette": { "meadow-arch/winter": 1 },
+    "format": { "square": 1, "a4-portrait": 1, "a4-landscape": 0 }
+  }
+}
