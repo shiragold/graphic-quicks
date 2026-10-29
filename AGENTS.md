@@ -196,9 +196,10 @@ All process spawning goes through an injectable `CommandRunner`; tests use
 query, events split by time gap, a per-photo decision call (subject /
 special-moment / quality), near-duplicate knockout via dHash + Jev choice,
 then a code-built event spread (~20 picks per 30 days of the range, override
-with `--count`) filled by Jev comparing each event's top candidates. Code
-owns all control flow; answers are typed probabilities (noul / choice /
-score), not free text. Special moments include parents, places, presents,
+with `--count`; `--min-photos` default 10 floors the count and fills from
+below `--min-score` when the barrier is thin) filled by Jev comparing each
+event's top candidates. Code owns all control flow; answers are typed
+probabilities (noul / choice / score), not free text. Special moments include parents, places, presents,
 and celebrations/performances (school shows, holidays, birthdays).
 
 The model sits behind `DecisionModel` (OpenRouter Decisions API, default

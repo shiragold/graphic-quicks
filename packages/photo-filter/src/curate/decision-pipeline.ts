@@ -36,6 +36,12 @@ export interface DecisionCurateOptions {
   context: CurationContext;
   qualityWeight?: number;
   minScore?: number;
+  /**
+   * Floor on pick count. When fewer than this many keepers clear `minScore`,
+   * fill from the next-best keepers below the barrier (still subject/quality eligible).
+   * Default 0 (no floor); the CLI defaults `--min-photos` to 10.
+   */
+  minPhotos?: number;
   concurrency?: number;
   gapHours?: number;
 }
@@ -102,6 +108,38 @@ export function countForRange(
   return Math.min(MAX_DECISION_COUNT, Math.max(1, Math.round(count)));
 }
 
+/** Target pick count: at least `minPhotos`, at most `MAX_DECISION_COUNT`. */
+export function pickTarget(count: number, minPhotos = 0): number {
+  if (!Number.isInteger(minPhotos) || minPhotos < 0 || minPhotos > MAX_DECISION_COUNT) {
+    throw new Error(`minPhotos must be an integer from 0 to ${MAX_DECISION_COUNT}`);
+  }
+  return Math.min(MAX_DECISION_COUNT, Math.max(count, minPhotos));
+}
+
+/**
+ * Prefer keepers at/above `minScore`; if that pool is thinner than `target`,
+ * append the next-best keepers below the barrier (already ranked by score).
+ */
+export function poolForTarget(
+  keepers: string[],
+  scoreOf: (uuid: string) => number,
+  minScore: number,
+  target: number,
+): { pool: string[]; aboveBarrier: number; filledBelow: number } {
+  const ranked = [...keepers].sort((a, b) => scoreOf(b) - scoreOf(a));
+  const above = ranked.filter((u) => scoreOf(u) >= minScore);
+  if (above.length >= target) {
+    return { pool: above, aboveBarrier: above.length, filledBelow: 0 };
+  }
+  const below = ranked.filter((u) => scoreOf(u) < minScore);
+  const filledBelow = Math.min(below.length, Math.max(0, target - above.length));
+  return {
+    pool: [...above, ...below.slice(0, filledBelow)],
+    aboveBarrier: above.length,
+    filledBelow,
+  };
+}
+
 export async function curateWithDecisions(
   deps: DecisionCurateDeps,
   opts: DecisionCurateOptions,
@@ -111,12 +149,13 @@ export async function curateWithDecisions(
   const fit = deps.fit ?? fitForDecision;
   const log = deps.log ?? (() => {});
   const ctx = opts.context;
-  const { qualityWeight = 0.3, minScore = 0.3, concurrency = 4, gapHours = 3 } = opts;
+  const { qualityWeight = 0.3, minScore = 0.3, minPhotos = 0, concurrency = 4, gapHours = 3 } = opts;
   if (!Number.isInteger(opts.count) || opts.count < 1 || opts.count > MAX_DECISION_COUNT) {
     throw new Error(`count must be an integer from 1 to ${MAX_DECISION_COUNT}`);
   }
   if (!(qualityWeight >= 0 && qualityWeight <= 1)) throw new Error('qualityWeight must be between 0 and 1');
   if (!(minScore >= 0 && minScore <= 1)) throw new Error('minScore must be between 0 and 1');
+  const target = pickTarget(opts.count, minPhotos);
 
   let modelCalls = 0;
   let inputTokens = 0;
@@ -290,7 +329,18 @@ export async function curateWithDecisions(
       return knockout(`burst ${gi + 1}`, pool, burstCompareInstructions());
     })
   ).filter((u): u is string => u !== undefined);
-  const strong = keepers.filter((u) => scoreOf(ctx.decisionVerdicts[u]) >= minScore);
+  const { pool: strong, aboveBarrier, filledBelow } = poolForTarget(
+    keepers,
+    (u) => scoreOf(ctx.decisionVerdicts[u]),
+    minScore,
+    target,
+  );
+  if (filledBelow > 0) {
+    log(
+      `min-photos ${minPhotos}: filled ${filledBelow} below min-score ${minScore}` +
+        ` (${aboveBarrier} cleared the barrier; target ${target})`,
+    );
+  }
 
   const byEvent = new Map<string, string[]>();
   for (const u of strong) byEvent.set(eventOf.get(u)!, [...(byEvent.get(eventOf.get(u)!) ?? []), u]);
@@ -303,7 +353,7 @@ export async function curateWithDecisions(
       (a, b) =>
         a.depth - b.depth || scoreOf(ctx.decisionVerdicts[b.u]) - scoreOf(ctx.decisionVerdicts[a.u]),
     )
-    .slice(0, opts.count)
+    .slice(0, target)
     .forEach(({ e }) => quota.set(e, (quota.get(e) ?? 0) + 1));
 
   const specialQ = specialCompareInstructions(subjectText);
@@ -351,7 +401,8 @@ export async function curateWithDecisions(
 
   log(
     `picks: ${picks.length} from ${new Set(picks.map((p) => p.candidate.event)).size} events` +
-      ` (${strong.length} candidates above min-score ${minScore}); $${costUsd.toFixed(4)}`,
+      ` (${aboveBarrier} above min-score ${minScore}` +
+      `${filledBelow ? `, ${filledBelow} below to meet min-photos` : ''}); $${costUsd.toFixed(4)}`,
   );
 
   return {

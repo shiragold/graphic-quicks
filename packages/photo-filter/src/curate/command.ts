@@ -27,6 +27,8 @@ export interface CurateCommandOptions {
   model?: string;
   qualityWeight?: number;
   minScore?: number;
+  /** Floor on picks; fill below min-score when needed (CLI default 10). */
+  minPhotos?: number;
   yes: boolean;
   version?: PhotoVersion;
   convertToJpeg: boolean;
@@ -84,6 +86,7 @@ export async function runCurateCommand(
         context: ctx,
         qualityWeight: opts.qualityWeight,
         minScore: opts.minScore,
+        minPhotos: opts.minPhotos,
       },
     );
   } finally {

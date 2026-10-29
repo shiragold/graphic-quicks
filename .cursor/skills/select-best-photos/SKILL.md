@@ -29,7 +29,10 @@ node --env-file-if-exists=packages/photo-filter/.env \
 ```
 
 Default density is ~20 picks per 30 days of the range (`--per-month 20`);
-override with `--count N`. Without a terminal it stops after writing
+override with `--count N`. `--min-photos` (default 10) is a floor: if fewer
+keepers clear `--min-score`, the run fills from the next-best below the
+barrier so a thin month still yields at least that many (when enough eligible
+photos exist). Without a terminal it stops after writing
 `<dest>/review.html`. Show the user the picks (or the sheet), then re-run
 with `--yes`; per-photo verdicts are cached, so a re-run skips judging.
 If the user wants some dropped, run without `--yes` in a terminal and

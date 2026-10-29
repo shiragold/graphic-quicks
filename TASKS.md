@@ -1,5 +1,21 @@
 # TASKS
 
+## Live: Annaelle 4 monthly curate → Album04 (2026-10-27)
+
+Brief: "best everyday moments of Annaelle"; subject Annaelle; `--yes` export.
+Dest: `~/Documents/Projects/Annaelle/Album04/<YYYY-MM>/`
+
+- [x] Curate all 11 months (Jev); review.html + manifest.json each
+- [x] HEIC originals where local; shared-album gaps filled with 2048px preview JPEGs
+- [x] Note: Annaelle 4 is shared — many originals never download; previews are the reliable copy
+- [ ] Re-run months with `--min-photos 10` after that flag ships (thin months had &lt;10 picks)
+
+## photo-filter `--min-photos` (2026-10-28)
+
+- [x] `pickTarget` / `poolForTarget` + wire into decision pipeline
+- [x] CLI default 10; skill + AGENTS note
+- [x] Verify tests (65) / typecheck / build
+
 ## photo-filter (Apple Photos access for CLI + MCP agents)
 
 Decisions: own package `packages/photo-filter` (core + CLI + MCP server sharing

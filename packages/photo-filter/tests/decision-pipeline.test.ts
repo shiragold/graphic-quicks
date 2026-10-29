@@ -6,6 +6,8 @@ import {
   emptyContext,
   MAX_DECISION_COUNT,
   photoScore,
+  pickTarget,
+  poolForTarget,
   type CurationContext,
   type ImageTools,
 } from '../src/index.js';
@@ -22,6 +24,28 @@ describe('countForRange', () => {
   it('caps long ranges at MAX_DECISION_COUNT', () => {
     expect(countForRange({ from: '2025-01-01', to: '2026-01-01' })).toBe(MAX_DECISION_COUNT);
     expect(countForRange({ from: '2025-01-01', to: '2026-01-01' }, 1)).toBe(12);
+  });
+});
+
+describe('pickTarget / poolForTarget', () => {
+  it('floors count at minPhotos and caps at MAX', () => {
+    expect(pickTarget(3, 10)).toBe(10);
+    expect(pickTarget(20, 10)).toBe(20);
+    expect(pickTarget(20, 0)).toBe(20);
+    expect(pickTarget(50, 60)).toBe(60);
+  });
+
+  it('fills below the score barrier to meet the target', () => {
+    const scores: Record<string, number> = { a: 0.9, b: 0.5, c: 0.2, d: 0.1, e: 0.05 };
+    const scoreOf = (u: string) => scores[u]!;
+    const keepers = Object.keys(scores);
+    const thin = poolForTarget(keepers, scoreOf, 0.3, 4);
+    expect(thin.aboveBarrier).toBe(2);
+    expect(thin.filledBelow).toBe(2);
+    expect(thin.pool).toEqual(['a', 'b', 'c', 'd']);
+    const enough = poolForTarget(keepers, scoreOf, 0.3, 2);
+    expect(enough.filledBelow).toBe(0);
+    expect(enough.pool).toEqual(['a', 'b']);
   });
 });
 
@@ -129,6 +153,40 @@ describe('curateWithDecisions', () => {
       },
     );
     expect(other.requests.filter((r) => r.name.startsWith('judge'))).toHaveLength(12);
+  });
+
+  it('fills below min-score when minPhotos demands more picks', async () => {
+    const logs: string[] = [];
+    // Only P1 / O1 get a high special; everyone else stays below a 0.5 barrier.
+    const base = fakeDecisionModel();
+    const model = {
+      ...base,
+      async decide(req: Parameters<typeof base.decide>[0]) {
+        const r = await base.decide(req);
+        if (req.name.startsWith('judge') && !/P1|O1/.test(req.name)) {
+          r.answers.special = { type: 'noul', noul: 0.15 };
+        }
+        if (req.name.startsWith('judge') && /P1|O1/.test(req.name)) {
+          r.answers.special = { type: 'noul', noul: 0.95 };
+        }
+        return r;
+      },
+    };
+    const result = await curateWithDecisions(
+      { lib: fakeLibrary(), model, images: fakeImages, fit: async (b) => b, log: (m) => logs.push(m) },
+      {
+        album: 'annaelle 4',
+        around: '2025-11-30',
+        brief: 'birthday party',
+        count: 2,
+        minPhotos: 5,
+        minScore: 0.5,
+        subjects: [{ name: 'Annaelle' }],
+        context: ctx,
+      },
+    );
+    expect(result.picks.length).toBeGreaterThanOrEqual(5);
+    expect(logs.some((m) => /filled \d+ below min-score/.test(m))).toBe(true);
   });
 
   it('filters near-duplicates by subject and quality before the burst knockout', async () => {

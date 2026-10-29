@@ -31,10 +31,11 @@ Commands:
       --around/--days or --from/--to         Date range (as for query)
       --count N                  Photos to pick (overrides --per-month; max 60)
       --per-month N              Target density (default 20 per 30 days of the range)
+      --min-photos N             Floor on picks; fill below --min-score if needed (default 10)
       --subject NAME             Person the brief is about; repeatable
       --ref NAME=UUID            Reference photo of a subject; repeatable
       --quality-weight W         Weight of quality in the score (default 0.3)
-      --min-score S              Drop candidates below this score (default 0.3)
+      --min-score S              Prefer candidates at/above this score (default 0.3)
       --context FILE             Shared context (default ~/.photo-filter/context/<album>--<brief>.json)
       --model ID                 Default typesafe/jev-1.14 (needs OPENROUTER_API_KEY)
       --yes                      Export without the confirm prompt
@@ -85,6 +86,7 @@ async function main(argv: string[]): Promise<void> {
       brief: { type: 'string' },
       count: { type: 'string' },
       'per-month': { type: 'string' },
+      'min-photos': { type: 'string' },
       'quality-weight': { type: 'string' },
       subject: { type: 'string', multiple: true },
       ref: { type: 'string', multiple: true },
@@ -187,6 +189,7 @@ async function main(argv: string[]): Promise<void> {
         dest: values.dest,
         count: int('count', values.count),
         perMonth: int('per-month', values['per-month']),
+        minPhotos: int('min-photos', values['min-photos']) ?? 10,
         around: values.around,
         days: int('days', values.days),
         from: values.from,
