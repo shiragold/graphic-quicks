@@ -1,9 +1,9 @@
 # graphic-quicks
 
 A pnpm workspace holding a set of standalone browser mini-apps under `apps/`
-(`photo-edit`, `photo-collage`, `image-scale`) plus three per-tool packages containing
+(`deskew`, `photo-collage`, `image-scale`) plus three per-tool packages containing
 the pure graphic-tool functions extracted from them:
-`@graphic-quicks/photo-edit` (OpenCV.js deskew/crop helpers),
+`@graphic-quicks/deskew` (OpenCV.js deskew/crop helpers),
 `@graphic-quicks/collage` (collage layout math + EXIF date parsing), and
 `@graphic-quicks/scale` (scale-factor math). The packages have no DOM or
 Canvas dependencies and each ships ESM with a single `"."` export → `dist/`.
@@ -19,11 +19,11 @@ There is no umbrella package; `@graphic-quicks/core` was dissolved.
   vitest.config.ts                 # projects: packages/*
   eslint.config.js
   apps/
-    photo-edit/                    # static index.html; private workspace package
+    deskew/                        # static index.html; private workspace package
     photo-collage/                 # static photo-collage.html; private workspace package
     image-scale/                   # static index.html; private workspace package
   packages/
-    photo-edit/                    # @graphic-quicks/photo-edit
+    deskew/                        # @graphic-quicks/deskew
       src/                         # pure OpenCV helpers + padded-rect crop math
       tests/                       # unit + pipeline tests, PNG fixtures
         setup.ts                   # awaits opencv-js Promise, sets globalThis.cv
@@ -58,8 +58,8 @@ pnpm -r build                      # tsc emit -> packages/*/dist (.js + .d.ts + 
 Scoped to one package:
 
 ```sh
-pnpm --filter @graphic-quicks/photo-edit test:watch
-pnpm --filter @graphic-quicks/photo-edit fixtures   # regenerate PNG test fixtures
+pnpm --filter @graphic-quicks/deskew test:watch
+pnpm --filter @graphic-quicks/deskew fixtures   # regenerate PNG test fixtures
 ```
 
 The mini-apps are buildless static HTML, but they import the packages'
@@ -69,7 +69,7 @@ CORS-fetched and `file://` is an opaque origin). Run them locally with:
 ```sh
 pnpm -r build   # dist/ is not committed; needed after clone or package changes
 pnpm serve      # static server at the repo root
-# then open http://localhost:3000/apps/photo-edit/ etc.
+# then open http://localhost:3000/apps/deskew/ etc.
 ```
 
 All three apps are private workspace packages (`apps/*/package.json`) with no
@@ -125,11 +125,11 @@ side effect. Element tests run under happy-dom (per-package
 
 ### `cv` is an ambient global, not an import
 
-`packages/photo-edit`'s modules declare `declare const cv: CV` and reference
+`packages/deskew`'s modules declare `declare const cv: CV` and reference
 `cv` as a free identifier, matching the original `photo-edit.js` design.
 `@techstark/opencv-js` 5.x is an **optional** peer dependency. Consumers must set
-`globalThis.cv` and await runtime initialization before calling any photo-edit
-function. The photo-edit app loads that same package from its own
+`globalThis.cv` and await runtime initialization before calling any deskew
+function. The deskew app loads that same package from its own
 `node_modules` (a classic script whose factory Promise resolves to `cv`). Tests
 `require` the package under Node. Do not swap in the docs.opencv.org 4.x build.
 
@@ -139,7 +139,7 @@ Under vitest 4.1.x, `import cv from '@techstark/opencv-js'` with top-level
 await crashes with `TypeError: Method Promise.prototype.then called on
 incompatible receiver [object Module]`: the CJS entry in opencv-js 5.x
 evaluates to a `Promise<CVModule>` rather than a synchronous object, and
-vitest's ESM wrapper mishandles that. `packages/photo-edit/tests/setup.ts`
+vitest's ESM wrapper mishandles that. `packages/deskew/tests/setup.ts`
 uses `createRequire(import.meta.url)('@techstark/opencv-js')` and awaits the
 Promise inside a `beforeAll` hook instead.
 

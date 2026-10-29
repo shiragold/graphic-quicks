@@ -1,7 +1,7 @@
 {
-  "name": "photo-edit",
+  "name": "deskew",
   "private": true,
-  "description": "Buildless photo-edit mini-app.",
+  "description": "Buildless deskew mini-app.",
   "type": "module",
   "dependencies": {
     "@techstark/opencv-js": "^5.0.0-release.1"
